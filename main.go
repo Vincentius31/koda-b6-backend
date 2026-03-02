@@ -53,7 +53,7 @@ func main() {
 
 	r.Static("/uploads", "./uploads")
 
-	routes.SetupRoutes(r)
+	routes.SetupRoutes(r, conn)
 
 	r.Run(fmt.Sprintf("localhost:%s", os.Getenv("PORT")))
 }
