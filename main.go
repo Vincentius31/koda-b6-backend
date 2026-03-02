@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"koda-b6-backend/routes"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 )
 
@@ -25,6 +28,19 @@ func corsMiddleware() gin.HandlerFunc {
 }
 
 func main() {
+	godotenv.Load()
+
+	connConfig,err := pgx.ParseConfig("")
+
+	if err != nil {
+		fmt.Println("Failed to parse config")
+		return
+	}
+
+	conn, err := pgx.Connect(context.Background(), connConfig.ConnString())
+
+
+	
 	r := gin.Default()
 	r.Use(corsMiddleware())
 
@@ -36,7 +52,5 @@ func main() {
 
 	routes.SetupRoutes(r)
 
-	godotenv.Load()
-
-	r.Run("localhost:8888")
+	r.Run(fmt.Sprintf("localhost:%s", os.Getenv("PORT")))
 }
