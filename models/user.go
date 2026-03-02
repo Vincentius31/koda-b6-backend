@@ -9,9 +9,9 @@ type User struct {
 	RolesId  int    `json:"roles_id"`        
 	Fullname string `json:"fullname"`        
 	Email    string `json:"email"`           
-	Phone    string `json:"phone"`           
 	Password string `json:"password"`        
 	Address  string `json:"address"`         
+	Phone    string `json:"phone"`           
 	Picture  string `json:"profile_picture"` 
 }
 
