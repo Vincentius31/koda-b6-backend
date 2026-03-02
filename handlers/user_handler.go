@@ -66,7 +66,6 @@ func LoginHandler(ctx *gin.Context, conn *pgx.Conn) {
 
 // Get All Users
 func GetAllUsersHandler(ctx *gin.Context, conn *pgx.Conn) {
-	// Tambahkan roles_id dan password ke dalam query SELECT
 	query := `SELECT id_user, roles_id, fullname, email, password, address, phone, profile_picture 
 			  FROM users JOIN roles on roles.id_roles = users.roles_id`
 
