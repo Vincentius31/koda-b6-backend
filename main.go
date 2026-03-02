@@ -38,9 +38,12 @@ func main() {
 	}
 
 	conn, err := pgx.Connect(context.Background(), connConfig.ConnString())
+	if err != nil {
+		fmt.Println("Connection Failed")
+		return
+	}
+	defer conn.Close(context.Background())
 
-
-	
 	r := gin.Default()
 	r.Use(corsMiddleware())
 
