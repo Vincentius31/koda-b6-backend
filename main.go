@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func corsMiddleware() gin.HandlerFunc {
@@ -34,6 +35,8 @@ func main() {
 	r.Static("/uploads", "./uploads")
 
 	routes.SetupRoutes(r)
+
+	godotenv.Load()
 
 	r.Run("localhost:8888")
 }
