@@ -12,13 +12,16 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Fullname string `json:"fullname"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Fullname string `json:"fullname" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
 }
 
 type UpdateUserRequest struct {
-	Fullname string `json:"fullname"`
-	Address  string `json:"address"`
-	Phone    string `json:"phone"`
+	Fullname       string `json:"fullname"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	Address        string `json:"address"`
+	Phone          string `json:"phone"`
+	ProfilePicture string `json:"profile_picture"`
 }
