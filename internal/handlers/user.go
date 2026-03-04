@@ -17,6 +17,32 @@ func NewUserHandler(s *service.UserService) *UserHandler {
 	return &UserHandler{service: s}
 }
 
+func (h *UserHandler) Login(ctx *gin.Context) {
+	var req models.LoginRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false,
+			Message: "Email and password are required",
+		})
+		return
+	}
+
+	token, err := h.service.Login(ctx.Request.Context(), req)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, models.WebResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.WebResponse{
+		Success: true,
+		Message: "Login successful",
+		Data:    models.LoginResponse{Token: token},
+	})
+}
+
 func (h *UserHandler) GetAll(ctx *gin.Context) {
 	users, err := h.service.FindAll(ctx.Request.Context())
 	if err != nil {
