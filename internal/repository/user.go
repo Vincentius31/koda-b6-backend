@@ -52,6 +52,17 @@ func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, err
 	return &u, nil
 }
 
+// Get User by Email
+func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+	query := `SELECT id_user, roles_id, fullname, email, password, address, phone, profile_picture FROM users WHERE email = $1`
+	var u models.User
+	err := r.db.QueryRow(ctx, query, email).Scan(&u.IDUser, &u.RolesID, &u.Fullname, &u.Email, &u.Password, &u.Address, &u.Phone, &u.ProfilePicture)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
 // Create User
 func (r *UserRepository) Create(ctx context.Context, u models.User) error {
 	query := `INSERT INTO users (fullname, email, password) VALUES ($1, $2, $3)`
