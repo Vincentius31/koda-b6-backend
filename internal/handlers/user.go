@@ -72,7 +72,7 @@ func (h *UserHandler) Create(ctx *gin.Context) {
 	if err := h.service.Register(ctx.Request.Context(), req); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
-			Message: "Failed to create User",
+			Message: err.Error(),
 		})
 		return
 	}
