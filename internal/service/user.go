@@ -21,7 +21,7 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-func validateUser(fullname string, email string, password string) error{
+func validateUser(fullname string, email string, password string) error {
 	if len(strings.TrimSpace(fullname)) < 1 {
 		return errors.New("Fullname must be at least 1 characters")
 	}
@@ -37,7 +37,7 @@ func validateUser(fullname string, email string, password string) error{
 	return nil
 }
 
-func (s *UserService) Login(ctx context.Context, req models.LoginRequest)(string, error){
+func (s *UserService) Login(ctx context.Context, req models.LoginRequest) (string, error) {
 	user, err := s.repo.GetByEmail(ctx, req.Email)
 
 	if err != nil {
@@ -51,13 +51,23 @@ func (s *UserService) Login(ctx context.Context, req models.LoginRequest)(string
 
 	claims := jwt.MapClaims{
 		"user_id": user.IDUser,
-		"email": user.Email,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
+		"email":   user.Email,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	secret := os.Getenv("APP_SECRET")
 	return token.SignedString([]byte(secret))
+}
+
+func (s *UserService) UpdateProfileImage(ctx context.Context, id int, filename string) error {
+	user, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	user.ProfilePicture = &filename
+	return s.repo.Update(ctx, id, *user)
 }
 
 func (s *UserService) FindAll(ctx context.Context) ([]models.User, error) {
@@ -75,7 +85,7 @@ func (s *UserService) Register(ctx context.Context, req models.CreateUserRequest
 
 	argon := argon2.DefaultConfig()
 	encoded, err := argon.HashEncoded([]byte(req.Password))
-	
+
 	if err != nil {
 		return err
 	}
