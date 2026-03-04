@@ -5,8 +5,11 @@ import (
 	"errors"
 	"koda-b6-backend/internal/models"
 	"koda-b6-backend/internal/repository"
+	"os"
 	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/matthewhartstonge/argon2"
 )
 
@@ -32,6 +35,29 @@ func validateUser(fullname string, email string, password string) error{
 		return errors.New("Password must be at least 5 characters")
 	}
 	return nil
+}
+
+func (s *UserService) Login(ctx context.Context, req models.LoginRequest)(string, error){
+	user, err := s.repo.GetByEmail(ctx, req.Email)
+
+	if err != nil {
+		return "", errors.New("Invalid email or password")
+	}
+
+	ok, err := argon2.VerifyEncoded([]byte(req.Password), []byte(user.Password))
+	if err != nil || !ok {
+		return "", errors.New("Invalid Email or Password")
+	}
+
+	claims := jwt.MapClaims{
+		"user_id": user.IDUser,
+		"email": user.Email,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	secret := os.Getenv("APP_SECRET")
+	return token.SignedString([]byte(secret))
 }
 
 func (s *UserService) FindAll(ctx context.Context) ([]models.User, error) {
