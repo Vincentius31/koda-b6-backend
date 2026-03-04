@@ -16,6 +16,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		userRoutes.GET("", userHandler.GetAll)
 		userRoutes.GET("/:id", userHandler.GetByID)
 		userRoutes.POST("", userHandler.Create)
+		userRoutes.POST("/login", userHandler.Login)
 		userRoutes.PUT("/:id", userHandler.Update)
 		userRoutes.DELETE("/:id", userHandler.Delete)
 	}
