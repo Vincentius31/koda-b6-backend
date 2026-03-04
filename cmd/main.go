@@ -30,7 +30,16 @@ func corsMiddleware() gin.HandlerFunc {
 func main() {
 	godotenv.Load()
 
-	connConfig,err := pgx.ParseConfig("")
+	r := gin.Default()
+	r.Use(corsMiddleware())
+
+	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+		os.Mkdir("uploads", 0755)
+	}
+
+	r.Static("/uploads", "./uploads")
+
+	connConfig, err := pgx.ParseConfig("")
 
 	if err != nil {
 		fmt.Println("Failed to parse config")
@@ -43,9 +52,6 @@ func main() {
 		return
 	}
 	defer conn.Close(context.Background())
-
-	r := gin.Default()
-	r.Use(corsMiddleware())
 
 	routes.SetupRoutes(r, conn)
 
