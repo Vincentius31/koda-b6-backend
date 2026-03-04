@@ -11,8 +11,14 @@ type User struct {
 	ProfilePicture *string `json:"profile_picture"`
 }
 
-type UserRequest struct {
+type CreateUserRequest struct {
 	Fullname string `json:"fullname"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type UpdateUserRequest struct {
+	Fullname string `json:"fullname"`
+	Address  string `json:"address"`
+	Phone    string `json:"phone"`
 }
