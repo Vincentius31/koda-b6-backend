@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"koda-b6-backend/internal/models"
 	"koda-b6-backend/internal/service"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -43,6 +45,71 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 	})
 }
 
+func (h *UserHandler) UploadProfile(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false, 
+			Message: "Invalid User ID",
+		})
+		return
+	}
+
+	file, err := ctx.FormFile("profile_image")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false, 
+			Message: "No file uploaded",
+		})
+		return
+	}
+
+	ext := filepath.Ext(file.Filename)
+	if ext != ".jpg" && ext != ".png" && ext != ".jpeg" {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false, 
+			Message: "Only JPG, PNG, and JPEG are allowed",
+		})
+		return
+	}
+
+	if file.Size > 5*1024*1024 {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false, 
+			Message: "File size too large (Max 5MB)",
+		})
+		return
+	}
+
+	// Menggunakan Timestamp agar tidak tertimpa untuk penamaan folder
+	// format: 1_1678901234_foto.jpg
+	filename := fmt.Sprintf("%d_%s", id, file.Filename)
+	dst := "uploads/" + filename
+
+	if err := ctx.SaveUploadedFile(file, dst); err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false, 
+			Message: "Failed to save file",
+		})
+		return
+	}
+
+	err = h.service.UpdateProfileImage(ctx.Request.Context(), id, filename)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false, 
+			Message: "Failed to update profile picture in database",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.WebResponse{
+		Success: true,
+		Message: "Profile picture uploaded successfully",
+		Data:    map[string]string{"url": "/uploads/" + filename},
+	})
+}
+
 func (h *UserHandler) GetAll(ctx *gin.Context) {
 	users, err := h.service.FindAll(ctx.Request.Context())
 	if err != nil {
@@ -55,7 +122,7 @@ func (h *UserHandler) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, models.WebResponse{
 		Success: true,
 		Message: "Successfully retrieved all users",
-		Data: users,
+		Data:    users,
 	})
 }
 
@@ -81,7 +148,7 @@ func (h *UserHandler) GetByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, models.WebResponse{
 		Success: true,
 		Message: "User found",
-		Data: user,
+		Data:    user,
 	})
 }
 
