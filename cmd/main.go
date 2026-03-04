@@ -47,8 +47,6 @@ func main() {
 	r := gin.Default()
 	r.Use(corsMiddleware())
 
-	r.Static("/uploads", "./uploads")
-
 	routes.SetupRoutes(r, conn)
 
 	r.Run(fmt.Sprintf("localhost:%s", os.Getenv("PORT")))
