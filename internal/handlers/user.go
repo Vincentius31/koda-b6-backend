@@ -49,7 +49,7 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: "Invalid User ID",
 		})
 		return
@@ -58,7 +58,7 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 	file, err := ctx.FormFile("profile_image")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: "No file uploaded",
 		})
 		return
@@ -67,7 +67,7 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 	ext := filepath.Ext(file.Filename)
 	if ext != ".jpg" && ext != ".png" && ext != ".jpeg" {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: "Only JPG, PNG, and JPEG are allowed",
 		})
 		return
@@ -75,7 +75,7 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 
 	if file.Size > 1*1024*1024 {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: "File size too large (Max 1MB)",
 		})
 		return
@@ -88,7 +88,7 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 
 	if err := ctx.SaveUploadedFile(file, dst); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: "Failed to save file",
 		})
 		return
@@ -107,7 +107,7 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: "Failed to update profile picture in database",
 		})
 		return
@@ -173,12 +173,20 @@ func (h *UserHandler) Create(ctx *gin.Context) {
 	}
 
 	if err := h.service.Register(ctx.Request.Context(), req); err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+		statusCode := http.StatusInternalServerError
+
+		if err.Error() == "email is already registered" {
+			statusCode = http.StatusConflict 
+		} else if err.Error() == "invalid email format" || err.Error() == "fullname must be at least 3 characters" {
+			statusCode = http.StatusBadRequest 
+		}
+		ctx.JSON(statusCode, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusCreated, models.WebResponse{
 		Success: true,
 		Message: "User created successfully",
