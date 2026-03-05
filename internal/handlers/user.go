@@ -95,6 +95,16 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 	}
 
 	err = h.service.UpdateProfileImage(ctx.Request.Context(), id, filename)
+	userIdFromToken := ctx.MustGet("user_id").(float64)
+	idParam, _ := strconv.Atoi(ctx.Param("id"))
+
+	if int(userIdFromToken) != idParam {
+		ctx.JSON(http.StatusForbidden, models.WebResponse{
+			Success: false,
+			Message: "You can only change your own profile!",
+		})
+	}
+
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false, 
