@@ -1,23 +1,35 @@
-POST /register HTTP/1.1
+POST /users HTTP/1.1
 Host: localhost:8888
 Content-Type: application/json
 
 {
     "fullname": "Vincentius",
     "email": "vincent@mail.com",
-    "password": "12345"
+    "password": "123456"
 }
 
 ###
 
-POST /login HTTP/1.1
+POST /users/login HTTP/1.1
 Host: localhost:8888
 Content-Type: application/json
 
 {
-    "email": "admin@mail.com",
-    "password": "1234"
+    "email": "vincent@mail.com",
+    "password": "123456"
 }
+
+###
+PATCH /users/1/upload HTTP/1.1
+Host: localhost:8888
+Content-Type: multipart/form-data; boundary=WebBoundary
+
+--WebBoundary
+Content-Disposition: form-data; name="profile_image"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< /home/vincentius31/Pictures/Identity/Passport-Photos.jpeg
+--WebBoundary--
 
 ###
 
@@ -33,7 +45,7 @@ Content-Type: application/json
 
 ###
 
-PATCH /users/1 HTTP/1.1
+PUT /users/2 HTTP/1.1
 Host: localhost:8888
 Content-Type: application/json
 
@@ -43,7 +55,7 @@ Content-Type: application/json
 
 ###
 
-DELETE /users/1 HTTP/1.1
+DELETE /users/2 HTTP/1.1
 Host: localhost:8888
 Content-Type: application/json
 
