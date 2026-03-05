@@ -73,10 +73,10 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 		return
 	}
 
-	if file.Size > 5*1024*1024 {
+	if file.Size > 1*1024*1024 {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false, 
-			Message: "File size too large (Max 5MB)",
+			Message: "File size too large (Max 1MB)",
 		})
 		return
 	}
