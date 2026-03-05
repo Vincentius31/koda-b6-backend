@@ -83,6 +83,12 @@ func (s *UserService) Register(ctx context.Context, req models.CreateUserRequest
 		return err
 	}
 
+	existingUser, _ := s.repo.GetByEmail(ctx, req.Email)
+
+	if existingUser != nil {
+		return errors.New("Email is already registered!")
+	}
+
 	argon := argon2.DefaultConfig()
 	encoded, err := argon.HashEncoded([]byte(req.Password))
 
