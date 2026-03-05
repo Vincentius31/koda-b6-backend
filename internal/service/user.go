@@ -125,8 +125,8 @@ func (s *UserService) Update(ctx context.Context, id int, req models.UpdateUserR
 	}
 
 	if req.Password != "" {
-		if len(req.Password) < 8 {
-			return errors.New("password must be at least 8 characters")
+		if len(req.Password) < 5 {
+			return errors.New("password must be at least 5 characters")
 		}
 		argon := argon2.DefaultConfig()
 		encoded, _ := argon.HashEncoded([]byte(req.Password))
