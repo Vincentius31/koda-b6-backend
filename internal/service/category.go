@@ -32,9 +32,17 @@ func (s *CategoryService) GetByID(ctx context.Context, id int) (*models.Category
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *CategoryService) Update(ctx context.Context, id int, req models.CreateCategoryRequest) error {
-	cat := models.Category{NameCategory: req.NameCategory}
-	return s.repo.Update(ctx, id, cat)
+func (s *CategoryService) Update(ctx context.Context, id int, req models.UpdateCategoryRequest) error {
+	existing, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return errors.New("category not found")
+	}
+
+	if req.NameCategory != nil {
+		existing.NameCategory = *req.NameCategory
+	}
+
+	return s.repo.Update(ctx, id, *existing)
 }
 
 func (s *CategoryService) Delete(ctx context.Context, id int) error {

@@ -38,21 +38,28 @@ func (s *ProductService) GetByID(ctx context.Context, id int) (*models.Product, 
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *ProductService) Update(ctx context.Context, id int, req models.CreateProductRequest) error {
-	// Pastikan barangnya ada dulu
-	_, err := s.repo.FindByID(ctx, id)
+func (s *ProductService) Update(ctx context.Context, id int, req models.UpdateProductRequest) error {
+	existing, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return errors.New("product not found")
 	}
-
-	product := models.Product{
-		Name:     req.Name,
-		Desc:     req.Desc,
-		Price:    req.Price,
-		Quantity: req.Quantity,
-		IsActive: req.IsActive,
+	if req.Name != nil {
+		existing.Name = *req.Name
 	}
-	return s.repo.Update(ctx, id, product)
+	if req.Desc != nil {
+		existing.Desc = *req.Desc
+	}
+	if req.Price != nil {
+		existing.Price = *req.Price
+	}
+	if req.Quantity != nil {
+		existing.Quantity = *req.Quantity
+	}
+	if req.IsActive != nil {
+		existing.IsActive = *req.IsActive
+	}
+
+	return s.repo.Update(ctx, id, *existing)
 }
 
 func (s *ProductService) Delete(ctx context.Context, id int) error {
