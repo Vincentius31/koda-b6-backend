@@ -25,6 +25,11 @@ type Container struct {
 	categoryRepo    *repository.CategoryRepository
 	categoryService *service.CategoryService
 	categoryHandler *handlers.CategoryHandler
+
+	//Product
+	productRepo    *repository.ProductRepository
+	productService *service.ProductService
+	productHandler *handlers.ProductHandler
 }
 
 func NewContainer(db *pgx.Conn) *Container {
@@ -52,6 +57,11 @@ func (c *Container) initDependencies() {
 	c.categoryRepo = repository.NewCategoryRepository(c.db)
 	c.categoryService = service.NewCategoryService(c.categoryRepo)
 	c.categoryHandler = handlers.NewCategoryHandler(c.categoryService)
+
+	//Product
+	c.productRepo = repository.NewProductRepository(c.db)
+	c.productService = service.NewProductService(c.productRepo)
+	c.productHandler = handlers.NewProductHandler(c.productService)
 }
 
 func (c *Container) UserHandler() *handlers.UserHandler {
@@ -62,6 +72,10 @@ func (c *Container) RoleHandler() *handlers.RoleHandler {
 	return c.roleHandler
 }
 
-func (c *Container) CategoryHandler() *handlers.CategoryHandler{
+func (c *Container) CategoryHandler() *handlers.CategoryHandler {
 	return c.categoryHandler
+}
+
+func (c *Container) ProductHandler() *handlers.ProductHandler {
+	return c.productHandler
 }
