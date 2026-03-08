@@ -81,10 +81,8 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 		return
 	}
 
-	// Menggunakan Timestamp agar tidak tertimpa untuk penamaan folder
-	// format: 1_1678901234_foto.jpg
 	filename := fmt.Sprintf("%d_%s", id, file.Filename)
-	dst := "uploads/" + filename
+	dst := "uploads/users" + filename
 
 	if err := ctx.SaveUploadedFile(file, dst); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
