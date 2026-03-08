@@ -8,3 +8,7 @@ type Category struct {
 type CreateCategoryRequest struct {
 	NameCategory string `json:"name_category" binding:"required"`
 }
+
+type UpdateCategoryRequest struct {
+	NameCategory *string `json:"name_category"`
+}

@@ -8,3 +8,7 @@ type Role struct {
 type CreateRoleRequest struct{
 	NameRoles string `json:"name_roles" binding:"required"`
 }
+
+type UpdateRoleRequest struct {
+	NameRoles *string `json:"name_roles"` // Gunakan pointer
+}

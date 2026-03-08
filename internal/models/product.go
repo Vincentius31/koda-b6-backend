@@ -16,3 +16,11 @@ type CreateProductRequest struct {
 	Quantity int    `json:"quantity" binding:"min=0"`
 	IsActive bool   `json:"is_active"`
 }
+
+type UpdateProductRequest struct {
+	Name     *string `json:"name"`
+	Desc     *string `json:"desc"`
+	Price    *int    `json:"price"`
+	Quantity *int    `json:"quantity"`
+	IsActive *bool   `json:"is_active"`
+}
