@@ -10,7 +10,7 @@ import (
 
 func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	container := di.NewContainer(conn)
-	
+
 	userHandler := container.UserHandler()
 	roleHandler := container.RoleHandler()
 
@@ -30,6 +30,9 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	roleRoutes := r.Group("/roles")
 	{
 		roleRoutes.GET("", roleHandler.GetAll)
+		roleRoutes.GET("/:id", roleHandler.GetByID)
 		roleRoutes.POST("", roleHandler.Create)
+		roleRoutes.PUT("/:id", roleHandler.Update)
+		roleRoutes.DELETE("/:id", roleHandler.Delete)
 	}
 }
