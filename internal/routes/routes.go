@@ -16,6 +16,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	categoryHandler := container.CategoryHandler()
 	productHandler := container.ProductHandler()
 	productCategoryHandler := container.ProductCategoryHandler()
+	productImageHandler := container.ProductImageHandler()
 
 	r.POST("/login", userHandler.Login)
 	r.POST("/register", userHandler.Create)
@@ -64,5 +65,14 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		productCategoryRoutes.POST("", productCategoryHandler.Create)
 		productCategoryRoutes.PUT("/:id", productCategoryHandler.Update)
 		productCategoryRoutes.DELETE("/:id", productCategoryHandler.Delete)
+	}
+
+	productImageRoutes := r.Group("/productimage")
+	{
+		productImageRoutes.GET("", productImageHandler.GetAll)
+		productImageRoutes.GET("/:id", productImageHandler.GetByID)
+		productImageRoutes.POST("", productImageHandler.Create)
+		productImageRoutes.PUT("/:id", productImageHandler.Update)
+		productImageRoutes.DELETE("/:id", productImageHandler.Delete)
 	}
 }
