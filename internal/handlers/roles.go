@@ -79,7 +79,7 @@ func (h *RoleHandler) GetByID(ctx *gin.Context) {
 
 func (h *RoleHandler) Update(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
-	var req models.CreateRoleRequest
+	var req models.UpdateRoleRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false,

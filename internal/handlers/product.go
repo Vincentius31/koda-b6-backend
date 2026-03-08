@@ -85,33 +85,27 @@ func (h *ProductHandler) GetByID(ctx *gin.Context) {
 }
 
 func (h *ProductHandler) Update(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, models.WebResponse{
-			Success: false, 
-			Message: "Invalid product ID",
-		})
-		return
-	}
-
-	var req models.CreateProductRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+    id, _ := strconv.Atoi(ctx.Param("id"))
+    
+    var req models.UpdateProductRequest 
+    
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false, 
 			Message: err.Error(),
 		})
-		return
-	}
+        return
+    }
 
-	if err := h.service.Update(ctx.Request.Context(), id, req); err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+    if err := h.service.Update(ctx.Request.Context(), id, req); err != nil {
+        ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false, 
 			Message: err.Error(),
 		})
-		return
-	}
+        return
+    }
 
-	ctx.JSON(http.StatusOK, models.WebResponse{
+    ctx.JSON(http.StatusOK, models.WebResponse{
 		Success: true, 
 		Message: "Product updated successfully",
 	})

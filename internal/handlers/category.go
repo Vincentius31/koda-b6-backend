@@ -71,7 +71,7 @@ func (h *CategoryHandler) GetByID(ctx *gin.Context) {
 
 func (h *CategoryHandler) Update(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
-	var req models.CreateCategoryRequest
+	var req models.UpdateCategoryRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false, 
