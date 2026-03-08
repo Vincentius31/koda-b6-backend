@@ -32,9 +32,12 @@ func (s *ProductImageService) Update(ctx context.Context, id int, req models.Upd
 	if err != nil {
 		return errors.New("Image not found")
 	}
-
-	if req.ProductID != nil { existing.ProductID = *req.ProductID }
-	if req.Path != nil { existing.Path = *req.Path }
+	if req.ProductID != nil {
+		existing.ProductID = *req.ProductID
+	}
+	if req.Path != nil {
+		existing.Path = *req.Path
+	}
 
 	return s.repo.Update(ctx, id, *existing)
 }
