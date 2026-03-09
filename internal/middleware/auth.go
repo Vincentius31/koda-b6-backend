@@ -18,6 +18,7 @@ func AuthMiddleware() gin.HandlerFunc{
 			ctx.JSON(http.StatusUnauthorized, models.WebResponse{
 				Success: false,
 				Message: "Authorization header is required",
+				Data: nil,
 			})
 			ctx.Abort()
 			return
@@ -28,6 +29,7 @@ func AuthMiddleware() gin.HandlerFunc{
 			ctx.JSON(http.StatusUnauthorized, models.WebResponse{
 				Success: false,
 				Message: "Invalid authorization format. Please use 'Bearer <token>'",
+				Data: nil,
 			})
 			ctx.Abort()
 			return
@@ -44,10 +46,12 @@ func AuthMiddleware() gin.HandlerFunc{
 		})
 
 		if err != nil || !token.Valid {
-			ctx.JSON(http.StatusUnauthorized, models.WebResponse{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, models.WebResponse{
 				Success: false,
 				Message: "Invalid or expired token",
+				Data: nil,
 			})
+			return 
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
