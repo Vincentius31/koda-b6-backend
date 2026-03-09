@@ -2,7 +2,7 @@ package models
 
 type ProductSize struct {
 	IDSize          int    `json:"id_size"`
-	ProdudctID      int    `json:"product_id"`
+	ProductID      int    `json:"product_id"`
 	SizeName        string `json:"size_name"`
 	AdditionalPrice int    `json:"additional_price"`
 }
