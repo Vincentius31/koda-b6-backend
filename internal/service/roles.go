@@ -49,6 +49,9 @@ func (s *RoleService) Update(ctx context.Context, id int, req models.UpdateRoleR
 	}
 
 	if req.NameRoles != nil {
+		if strings.TrimSpace(*req.NameRoles) == "" {
+			return errors.New("Role name cannot be empty")
+		}
 		existing.NameRoles = *req.NameRoles
 	}
 
