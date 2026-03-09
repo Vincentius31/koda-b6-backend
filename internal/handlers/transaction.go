@@ -17,12 +17,22 @@ func NewTransactionHandler(s *service.TransactionService) *TransactionHandler {
 	return &TransactionHandler{service: s}
 }
 
+// Create godoc
+// @Summary Create a new transaction
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param request body models.CreateTransactionRequest true "Transaction Request"
+// @Success 201 {object} models.WebResponse
+// @Failure 400 {object} models.WebResponse
+// @Router /transactions [post]
 func (h *TransactionHandler) Create(ctx *gin.Context) {
 	var req models.CreateTransactionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
+			Data:    nil,
 		})
 		return
 	}
@@ -30,36 +40,84 @@ func (h *TransactionHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
+			Data:    nil,
 		})
 		return
 	}
 	ctx.JSON(http.StatusCreated, models.WebResponse{
 		Success: true,
-		Message: "Transaction created",
+		Message: "Transaction created successfully",
+		Data:    nil,
 	})
 }
 
+// GetAll godoc
+// @Summary Get all transactions
+// @Tags transactions
+// @Produce json
+// @Success 200 {object} models.WebResponse
+// @Router /transactions [get]
 func (h *TransactionHandler) GetAll(ctx *gin.Context) {
-	data, _ := h.service.GetAll(ctx.Request.Context())
+	data, err := h.service.GetAll(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false,
+			Message: "Failed to fetch transactions",
+			Data:    nil,
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, models.WebResponse{
 		Success: true,
+		Message: "Successfully retrieved all transactions",
 		Data:    data,
 	})
 }
 
+// GetByID godoc
+// @Summary Get transaction by ID
+// @Tags transactions
+// @Produce json
+// @Param id path int true "Transaction ID"
+// @Success 200 {object} models.WebResponse
+// @Failure 404 {object} models.WebResponse
+// @Router /transactions/{id} [get]
 func (h *TransactionHandler) GetByID(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false,
+			Message: "Invalid ID format",
+			Data:    nil,
+		})
+		return
+	}
+
 	data, err := h.service.GetByID(ctx.Request.Context(), id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, models.WebResponse{
 			Success: false,
 			Message: "Transaction not found",
+			Data:    nil,
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, models.WebResponse{Success: true, Data: data})
+	ctx.JSON(http.StatusOK, models.WebResponse{
+		Success: true,
+		Message: "Transaction found",
+		Data:    data,
+	})
 }
 
+// Update godoc
+// @Summary Update transaction (PATCH)
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param id path int true "Transaction ID"
+// @Param request body models.UpdateTransactionRequest true "Update Request"
+// @Success 200 {object} models.WebResponse
+// @Router /transactions/{id} [patch]
 func (h *TransactionHandler) Update(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	var req models.UpdateTransactionRequest
@@ -67,6 +125,7 @@ func (h *TransactionHandler) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
+			Data:    nil,
 		})
 		return
 	}
@@ -74,26 +133,36 @@ func (h *TransactionHandler) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
+			Data:    nil,
 		})
 		return
 	}
 	ctx.JSON(http.StatusOK, models.WebResponse{
 		Success: true,
-		Message: "Transaction updated",
+		Message: "Transaction updated successfully",
+		Data:    nil,
 	})
 }
 
+// Delete godoc
+// @Summary Delete transaction
+// @Tags transactions
+// @Param id path int true "Transaction ID"
+// @Success 200 {object} models.WebResponse
+// @Router /transactions/{id} [delete]
 func (h *TransactionHandler) Delete(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	if err := h.service.Delete(ctx.Request.Context(), id); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
-			Message: err.Error(),
+			Message: "Failed to delete transaction",
+			Data:    nil,
 		})
 		return
 	}
 	ctx.JSON(http.StatusOK, models.WebResponse{
 		Success: true,
-		Message: "Transaction deleted",
+		Message: "Transaction deleted successfully",
+		Data:    nil,
 	})
 }
