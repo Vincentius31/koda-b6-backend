@@ -65,6 +65,11 @@ type Container struct {
 	transactionRepo    *repository.TransactionRepository
 	transactionService *service.TransactionService
 	transactionHandler *handlers.TransactionHandler
+
+	//transaction_product
+	transactionProductRepo    *repository.TransactionProductRepository
+	transactionProductService *service.TransactionProductService
+	transactionProductHandler *handlers.TransactionProductHandler
 }
 
 func NewContainer(db *pgx.Conn) *Container {
@@ -132,6 +137,11 @@ func (c *Container) initDependencies() {
 	c.transactionRepo = repository.NewTransactionRepository(c.db)
 	c.transactionService = service.NewTransactionService(c.transactionRepo)
 	c.transactionHandler = handlers.NewTransactionHandler(c.transactionService)
+
+	//transaction_product
+	c.transactionProductRepo = repository.NewTransactionProductRepository(c.db)
+	c.transactionProductService = service.NewTransactionProductService(c.transactionProductRepo)
+	c.transactionProductHandler = handlers.NewTransactionProductHandler(c.transactionProductService)
 }
 
 func (c *Container) UserHandler() *handlers.UserHandler {
@@ -176,4 +186,8 @@ func (c *Container) CartHandler() *handlers.CartHandler {
 
 func (c *Container) TransactionHandler() *handlers.TransactionHandler {
 	return c.transactionHandler
+}
+
+func (c *Container) TransactionProductHandler() *handlers.TransactionProductHandler {
+	return c.transactionProductHandler
 }
