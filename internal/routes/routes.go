@@ -34,7 +34,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		userRoutes.GET("", userHandler.GetAll)
 		userRoutes.GET("/:id", userHandler.GetByID)
 		userRoutes.PATCH("/:id/upload", userHandler.UploadProfile)
-		userRoutes.PUT("/:id", userHandler.Update)
+		userRoutes.PATCH("/:id", userHandler.Update)
 		userRoutes.DELETE("/:id", userHandler.Delete)
 	}
 
@@ -43,7 +43,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		roleRoutes.GET("", roleHandler.GetAll)
 		roleRoutes.GET("/:id", roleHandler.GetByID)
 		roleRoutes.POST("", roleHandler.Create)
-		roleRoutes.PUT("/:id", roleHandler.Update)
+		roleRoutes.PATCH("/:id", roleHandler.Update)
 		roleRoutes.DELETE("/:id", roleHandler.Delete)
 	}
 
@@ -52,7 +52,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		categoryRoutes.GET("", categoryHandler.GetAll)
 		categoryRoutes.GET("/:id", categoryHandler.GetByID)
 		categoryRoutes.POST("", categoryHandler.Create)
-		categoryRoutes.PUT("/:id", categoryHandler.Update)
+		categoryRoutes.PATCH("/:id", categoryHandler.Update)
 		categoryRoutes.DELETE("/:id", categoryHandler.Delete)
 	}
 
@@ -61,7 +61,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		productRoutes.GET("", productHandler.GetAll)
 		productRoutes.GET("/:id", productHandler.GetByID)
 		productRoutes.POST("", productHandler.Create)
-		productRoutes.PUT("/:id", productHandler.Update)
+		productRoutes.PATCH("/:id", productHandler.Update)
 		productRoutes.DELETE("/:id", productHandler.Delete)
 	}
 
@@ -70,7 +70,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		productCategoryRoutes.GET("", productCategoryHandler.GetAll)
 		productCategoryRoutes.GET("/:id", productCategoryHandler.GetByID)
 		productCategoryRoutes.POST("", productCategoryHandler.Create)
-		productCategoryRoutes.PUT("/:id", productCategoryHandler.Update)
+		productCategoryRoutes.PATCH("/:id", productCategoryHandler.Update)
 		productCategoryRoutes.DELETE("/:id", productCategoryHandler.Delete)
 	}
 
@@ -79,7 +79,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		productImageRoutes.GET("", productImageHandler.GetAll)
 		productImageRoutes.GET("/:id", productImageHandler.GetByID)
 		productImageRoutes.POST("", productImageHandler.Create)
-		productImageRoutes.PUT("/:id", productImageHandler.Update)
+		productImageRoutes.PATCH("/:id", productImageHandler.Update)
 		productImageRoutes.DELETE("/:id", productImageHandler.Delete)
 	}
 
@@ -88,7 +88,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		productVariantRoutes.GET("", productVariantHandler.GetAll)
 		productVariantRoutes.GET("/:id", productVariantHandler.GetByID)
 		productVariantRoutes.POST("", productVariantHandler.Create)
-		productVariantRoutes.PUT("/:id", productVariantHandler.Update)
+		productVariantRoutes.PATCH("/:id", productVariantHandler.Update)
 		productVariantRoutes.DELETE("/:id", productVariantHandler.Delete)
 	}
 
@@ -97,7 +97,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		productSizeRoutes.GET("", productSizeHandler.GetAll)
 		productSizeRoutes.GET("/:id", productSizeHandler.GetByID)
 		productSizeRoutes.POST("", productSizeHandler.Create)
-		productSizeRoutes.PUT("/:id", productSizeHandler.Update)
+		productSizeRoutes.PATCH("/:id", productSizeHandler.Update)
 		productSizeRoutes.DELETE("/:id", productSizeHandler.Delete)
 	}
 
@@ -106,7 +106,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		discountRoutes.GET("", discountHandler.GetAll)
 		discountRoutes.GET("/:id", discountHandler.GetByID)
 		discountRoutes.POST("", discountHandler.Create)
-		discountRoutes.PUT("/:id", discountHandler.Update)
+		discountRoutes.PATCH("/:id", discountHandler.Update)
 		discountRoutes.DELETE("/:id", discountHandler.Delete)
 	}
 
@@ -115,7 +115,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		cartRoutes.GET("", cartHandler.GetAll)
 		cartRoutes.GET("/:id", cartHandler.GetByID)
 		cartRoutes.POST("", cartHandler.Create)
-		cartRoutes.PUT("/:id", cartHandler.Update)
+		cartRoutes.PATCH("/:id", cartHandler.Update)
 		cartRoutes.DELETE("/:id", cartHandler.Delete)
 	}
 
@@ -124,7 +124,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		transactionRoutes.GET("", transactionHandler.GetAll)
 		transactionRoutes.GET("/:id", transactionHandler.GetByID)
 		transactionRoutes.POST("", transactionHandler.Create)
-		transactionRoutes.PUT("/:id", transactionHandler.Update)
+		transactionRoutes.PATCH("/:id", transactionHandler.Update)
 		transactionRoutes.DELETE("/:id", transactionHandler.Delete)
 	}
 
@@ -133,7 +133,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		transactionProductRoutes.GET("", transactionProductHandler.GetAll)
 		transactionProductRoutes.GET("/:id", transactionProductHandler.GetByID)
 		transactionProductRoutes.POST("", transactionProductHandler.Create)
-		transactionProductRoutes.PUT("/:id", transactionProductHandler.Update)
+		transactionProductRoutes.PATCH("/:id", transactionProductHandler.Update)
 		transactionProductRoutes.DELETE("/:id", transactionProductHandler.Delete)
 	}
 
@@ -142,7 +142,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		reviewRoutes.GET("", reviewHandler.GetAll)
 		reviewRoutes.GET("/:id", reviewHandler.GetByID)
 		reviewRoutes.POST("", reviewHandler.Create)
-		reviewRoutes.PUT("/:id", reviewHandler.Update)
+		reviewRoutes.PATCH("/:id", reviewHandler.Update)
 		reviewRoutes.DELETE("/:id", reviewHandler.Delete)
 	}
 }
