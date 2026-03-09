@@ -10,5 +10,5 @@ type CreateRoleRequest struct{
 }
 
 type UpdateRoleRequest struct {
-	NameRoles *string `json:"name_roles"` // Gunakan pointer
+	NameRoles *string `json:"name_roles"`
 }
