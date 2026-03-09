@@ -38,23 +38,29 @@ func (s *TransactionProductService) GetByID(ctx context.Context, id int) (*model
 func (s *TransactionProductService) Update(ctx context.Context, id int, req models.UpdateTransactionProductRequest) error {
 	existing, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return errors.New("transaction product detail not found")
+		return errors.New("Transaction product detail not found")
 	}
+
 	if req.TransactionID != nil {
 		existing.TransactionID = *req.TransactionID
 	}
+
 	if req.ProductID != nil {
 		existing.ProductID = req.ProductID
 	}
+
 	if req.Quantity != nil {
 		existing.Quantity = *req.Quantity
 	}
+
 	if req.Size != nil {
 		existing.Size = *req.Size
 	}
+
 	if req.Variant != nil {
 		existing.Variant = *req.Variant
 	}
+
 	if req.Price != nil {
 		existing.Price = *req.Price
 	}
