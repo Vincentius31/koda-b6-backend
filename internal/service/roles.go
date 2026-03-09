@@ -56,7 +56,6 @@ func (s *RoleService) Update(ctx context.Context, id int, req models.UpdateRoleR
 }
 
 func (s *RoleService) Delete(ctx context.Context, id int) error {
-	// Cek apakah role ada
 	_, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return errors.New("Role not found")
