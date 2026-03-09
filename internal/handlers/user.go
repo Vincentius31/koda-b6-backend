@@ -143,7 +143,6 @@ func (h *UserHandler) Create(ctx *gin.Context) {
 
 	if err := h.service.Register(ctx.Request.Context(), req); err != nil {
 		statusCode := http.StatusInternalServerError
-		// Pengecekan error message spesifik
 		if err.Error() == "Email is already registered!" {
 			statusCode = http.StatusConflict
 		} else {
