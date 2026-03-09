@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
 	"koda-b6-backend/internal/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type TransactionRepository struct {
@@ -30,23 +31,19 @@ func (r *TransactionRepository) FindAll(ctx context.Context) ([]models.Transacti
 	}
 	defer rows.Close()
 
-	var transactions []models.Transaction
-	for rows.Next() {
-		var t models.Transaction
-		err := rows.Scan(&t.IDTransaction, &t.UserID, &t.TransactionNumber, &t.DeliveryMethod, &t.Subtotal, &t.Total, &t.Status, &t.PaymentMethod, &t.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		transactions = append(transactions, t)
-	}
-	return transactions, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Transaction])
 }
 
 func (r *TransactionRepository) FindByID(ctx context.Context, id int) (*models.Transaction, error) {
-	var t models.Transaction
 	query := `SELECT id_transaction, user_id, transaction_number, delivery_method, subtotal, total, status, payment_method, created_at 
 	          FROM "transaction" WHERE id_transaction = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(&t.IDTransaction, &t.UserID, &t.TransactionNumber, &t.DeliveryMethod, &t.Subtotal, &t.Total, &t.Status, &t.PaymentMethod, &t.CreatedAt)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	t, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Transaction])
 	if err != nil {
 		return nil, err
 	}
