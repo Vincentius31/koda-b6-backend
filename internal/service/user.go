@@ -109,18 +109,13 @@ func (s *UserService) Update(ctx context.Context, id int, req models.UpdateUserR
 	if err != nil {
 		return err
 	}
-
 	if req.Fullname != "" {
 		if len(strings.TrimSpace(req.Fullname)) < 1 {
-			return errors.New("Fullname must be at least 1 characters")
+			return errors.New("Fullname cannot be empty!")
 		}
 		user.Fullname = req.Fullname
 	}
-
 	if req.Email != "" {
-		if !strings.Contains(req.Email, "@") || !strings.Contains(req.Email, ".") {
-			return errors.New("Invalid email format")
-		}
 		user.Email = req.Email
 	}
 
@@ -132,7 +127,6 @@ func (s *UserService) Update(ctx context.Context, id int, req models.UpdateUserR
 		encoded, _ := argon.HashEncoded([]byte(req.Password))
 		user.Password = string(encoded)
 	}
-
 	if req.Address != "" {
 		user.Address = &req.Address
 	}
