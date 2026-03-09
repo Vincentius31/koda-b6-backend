@@ -20,6 +20,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	productVariantHandler := container.ProductVariantHandler()
 	productSizeHandler := container.ProductSizeHandler()
 	discountHandler := container.DiscountHandler()
+	cartHandler := container.CartHandler()
 
 	r.POST("/login", userHandler.Login)
 	r.POST("/register", userHandler.Create)
@@ -104,5 +105,14 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		discountRoutes.POST("", discountHandler.Create)
 		discountRoutes.PUT("/:id", discountHandler.Update)
 		discountRoutes.DELETE("/:id", discountHandler.Delete)
+	}
+
+	cartRoutes := r.Group("/cart")
+	{
+		cartRoutes.GET("", cartHandler.GetAll)
+		cartRoutes.GET("/:id", cartHandler.GetByID)
+		cartRoutes.POST("", cartHandler.Create)
+		cartRoutes.PUT("/:id", cartHandler.Update)
+		cartRoutes.DELETE("/:id", cartHandler.Delete)
 	}
 }
