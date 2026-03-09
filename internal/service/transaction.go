@@ -46,6 +46,7 @@ func (s *TransactionService) Update(ctx context.Context, id int, req models.Upda
 	if err != nil {
 		return errors.New("Transaction not found")
 	}
+
 	if req.UserID != nil {
 		existing.UserID = req.UserID
 	}
