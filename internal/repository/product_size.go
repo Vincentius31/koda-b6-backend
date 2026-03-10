@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
 	"koda-b6-backend/internal/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type ProductSizeRepository struct {
@@ -28,23 +29,22 @@ func (r *ProductSizeRepository) FindAll(ctx context.Context) ([]models.ProductSi
 	}
 	defer rows.Close()
 
-	var sizes []models.ProductSize
-	for rows.Next() {
-		var s models.ProductSize
-		rows.Scan(&s.IDSize, &s.ProductID, &s.SizeName, &s.AdditionalPrice)
-		sizes = append(sizes, s)
-	}
-	return sizes, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductSize])
 }
 
 func (r *ProductSizeRepository) FindByID(ctx context.Context, id int) (*models.ProductSize, error) {
-	var s models.ProductSize
 	query := `SELECT id_size, product_id, size_name, additional_price FROM product_size WHERE id_size = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(&s.IDSize, &s.ProductID, &s.SizeName, &s.AdditionalPrice)
+	rows, err := r.db.Query(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
-	return &s, nil
+	defer rows.Close()
+
+	size, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.ProductSize])
+	if err != nil {
+		return nil, err
+	}
+	return &size, nil
 }
 
 func (r *ProductSizeRepository) Update(ctx context.Context, id int, s models.ProductSize) error {
