@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"koda-b6-backend/internal/models"
 	"github.com/jackc/pgx/v5"
+	"koda-b6-backend/internal/models"
 )
 
 type ProductCategoryRepository struct {
@@ -28,21 +28,18 @@ func (r *ProductCategoryRepository) FindAll(ctx context.Context) ([]models.Produ
 	}
 	defer rows.Close()
 
-	var results []models.ProductCategory
-	for rows.Next() {
-		var pc models.ProductCategory
-		if err := rows.Scan(&pc.ProductID, &pc.CategoryID); err != nil {
-			return nil, err
-		}
-		results = append(results, pc)
-	}
-	return results, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductCategory])
 }
 
 func (r *ProductCategoryRepository) FindByID(ctx context.Context, prodID int, catID int) (*models.ProductCategory, error) {
 	query := `SELECT product_id, category_id FROM products_category WHERE product_id = $1 AND category_id = $2`
-	var pc models.ProductCategory
-	err := r.db.QueryRow(ctx, query, prodID, catID).Scan(&pc.ProductID, &pc.CategoryID)
+	rows, err := r.db.Query(ctx, query, prodID, catID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	pc, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.ProductCategory])
 	if err != nil {
 		return nil, err
 	}
