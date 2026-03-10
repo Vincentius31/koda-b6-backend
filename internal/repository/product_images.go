@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
 	"koda-b6-backend/internal/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type ProductImageRepository struct {
@@ -28,21 +29,18 @@ func (r *ProductImageRepository) FindAll(ctx context.Context) ([]models.ProductI
 	}
 	defer rows.Close()
 
-	var images []models.ProductImage
-	for rows.Next() {
-		var img models.ProductImage
-		if err := rows.Scan(&img.IDImage, &img.ProductID, &img.Path); err != nil {
-			return nil, err
-		}
-		images = append(images, img)
-	}
-	return images, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductImage])
 }
 
 func (r *ProductImageRepository) FindByID(ctx context.Context, id int) (*models.ProductImage, error) {
 	query := `SELECT id_image, product_id, path FROM product_images WHERE id_image = $1`
-	var img models.ProductImage
-	err := r.db.QueryRow(ctx, query, id).Scan(&img.IDImage, &img.ProductID, &img.Path)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	img, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.ProductImage])
 	if err != nil {
 		return nil, err
 	}
