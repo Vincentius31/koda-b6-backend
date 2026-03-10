@@ -28,21 +28,18 @@ func (r *CategoryRepository) FindAll(ctx context.Context) ([]models.Category, er
 	}
 	defer rows.Close()
 
-	var categories []models.Category
-	for rows.Next() {
-		var cat models.Category
-		if err := rows.Scan(&cat.IDCategory, &cat.NameCategory); err != nil {
-			return nil, err
-		}
-		categories = append(categories, cat)
-	}
-	return categories, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Category])
 }
 
 func (r *CategoryRepository) FindByID(ctx context.Context, id int) (*models.Category, error) {
 	query := `SELECT id_category, name_category FROM category WHERE id_category = $1`
-	var cat models.Category
-	err := r.db.QueryRow(ctx, query, id).Scan(&cat.IDCategory, &cat.NameCategory)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	cat, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Category])
 	if err != nil {
 		return nil, err
 	}
