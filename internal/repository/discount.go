@@ -28,19 +28,18 @@ func (r *DiscountRepository) FindAll(ctx context.Context) ([]models.Discount, er
 	}
 	defer rows.Close()
 
-	var discounts []models.Discount
-	for rows.Next() {
-		var d models.Discount
-		rows.Scan(&d.IDDiscount, &d.ProductID, &d.DiscountRate, &d.Description, &d.IsFlashSale)
-		discounts = append(discounts, d)
-	}
-	return discounts, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Discount])
 }
 
 func (r *DiscountRepository) FindByID(ctx context.Context, id int) (*models.Discount, error) {
-	var d models.Discount
 	query := `SELECT id_discount, product_id, discount_rate, description, is_flash_sale FROM discount WHERE id_discount = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(&d.IDDiscount, &d.ProductID, &d.DiscountRate, &d.Description, &d.IsFlashSale)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	d, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Discount])
 	if err != nil {
 		return nil, err
 	}
