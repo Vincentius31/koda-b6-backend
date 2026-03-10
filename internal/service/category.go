@@ -39,6 +39,9 @@ func (s *CategoryService) Update(ctx context.Context, id int, req models.UpdateC
 	}
 
 	if req.NameCategory != nil {
+		if strings.TrimSpace(*req.NameCategory) == "" {
+			return errors.New("Category name cannot be empty")
+		}
 		existing.NameCategory = *req.NameCategory
 	}
 
