@@ -13,20 +13,17 @@ type RoleService struct {
 }
 
 func NewRoleService(repo *repository.RoleRepository) *RoleService {
-	return &RoleService{
-		repo: repo,
-	}
+	return &RoleService{repo: repo}
 }
 
 func (s *RoleService) Create(ctx context.Context, req models.CreateRoleRequest) error {
 	if strings.TrimSpace(req.NameRoles) == "" {
-		return errors.New("Role name cannot be empty")
+		return errors.New("Role name cannot be empty or just spaces")
 	}
 
 	role := models.Role{
 		NameRoles: req.NameRoles,
 	}
-
 	return s.repo.Create(ctx, role)
 }
 
@@ -35,11 +32,7 @@ func (s *RoleService) GetAll(ctx context.Context) ([]models.Role, error) {
 }
 
 func (s *RoleService) GetByID(ctx context.Context, id int) (*models.Role, error) {
-	role, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		return nil, errors.New("Role not found")
-	}
-	return role, nil
+	return s.repo.FindByID(ctx, id)
 }
 
 func (s *RoleService) Update(ctx context.Context, id int, req models.UpdateRoleRequest) error {
@@ -61,8 +54,7 @@ func (s *RoleService) Update(ctx context.Context, id int, req models.UpdateRoleR
 func (s *RoleService) Delete(ctx context.Context, id int) error {
 	_, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return errors.New("Role not found")
+		return errors.New("role not found")
 	}
-
 	return s.repo.Delete(ctx, id)
 }
