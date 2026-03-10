@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
 	"koda-b6-backend/internal/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type ReviewRepository struct {
@@ -28,22 +29,18 @@ func (r *ReviewRepository) FindAll(ctx context.Context) ([]models.Review, error)
 	}
 	defer rows.Close()
 
-	var reviews []models.Review
-	for rows.Next() {
-		var rev models.Review
-		err := rows.Scan(&rev.IDReview, &rev.UserID, &rev.ProductID, &rev.Messages, &rev.Rating)
-		if err != nil {
-			return nil, err
-		}
-		reviews = append(reviews, rev)
-	}
-	return reviews, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Review])
 }
 
 func (r *ReviewRepository) FindByID(ctx context.Context, id int) (*models.Review, error) {
-	var rev models.Review
 	query := `SELECT id_review, user_id, product_id, messages, rating FROM review WHERE id_review = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(&rev.IDReview, &rev.UserID, &rev.ProductID, &rev.Messages, &rev.Rating)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	rev, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Review])
 	if err != nil {
 		return nil, err
 	}
