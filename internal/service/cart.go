@@ -37,8 +37,9 @@ func (s *CartService) GetByID(ctx context.Context, id int) (*models.Cart, error)
 func (s *CartService) Update(ctx context.Context, id int, req models.UpdateCartRequest) error {
 	existing, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return errors.New("cart item not found")
+		return errors.New("Cart item not found")
 	}
+
 	if req.UserID != nil {
 		existing.UserID = *req.UserID
 	}
@@ -52,6 +53,9 @@ func (s *CartService) Update(ctx context.Context, id int, req models.UpdateCartR
 		existing.SizeID = req.SizeID
 	}
 	if req.Quantity != nil {
+		if *req.Quantity < 1 {
+			return errors.New("Quantity must be at least 1")
+		}
 		existing.Quantity = *req.Quantity
 	}
 
