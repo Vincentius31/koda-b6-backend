@@ -38,10 +38,14 @@ func (s *DiscountService) Update(ctx context.Context, id int, req models.UpdateD
 	if err != nil {
 		return errors.New("discount not found")
 	}
+
 	if req.ProductID != nil {
 		existing.ProductID = *req.ProductID
 	}
 	if req.DiscountRate != nil {
+		if *req.DiscountRate < 0 {
+			return errors.New("Discount rate cannot be negative")
+		}
 		existing.DiscountRate = *req.DiscountRate
 	}
 	if req.Description != nil {
