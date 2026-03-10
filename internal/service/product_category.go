@@ -17,7 +17,7 @@ func NewProductCategoryService(repo *repository.ProductCategoryRepository) *Prod
 
 func (s *ProductCategoryService) Create(ctx context.Context, req models.CreateProductCategoryRequest) error {
 	pc := models.ProductCategory{
-		ProductID: req.ProductID, 
+		ProductID:  req.ProductID,
 		CategoryID: req.CategoryID,
 	}
 	return s.repo.Create(ctx, pc)
@@ -34,7 +34,7 @@ func (s *ProductCategoryService) GetByID(ctx context.Context, prodID int, catID 
 func (s *ProductCategoryService) Update(ctx context.Context, oldP int, oldC int, req models.UpdateProductCategoryRequest) error {
 	existing, err := s.repo.FindByID(ctx, oldP, oldC)
 	if err != nil {
-		return errors.New("Data not found")
+		return errors.New("Relation not found")
 	}
 
 	newProductID := existing.ProductID
@@ -51,7 +51,7 @@ func (s *ProductCategoryService) Update(ctx context.Context, oldP int, oldC int,
 		ProductID:  newProductID,
 		CategoryID: newCategoryID,
 	}
-	
+
 	return s.repo.Update(ctx, oldP, oldC, updatedData)
 }
 
