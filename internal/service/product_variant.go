@@ -35,8 +35,9 @@ func (s *ProductVariantService) GetByID(ctx context.Context, id int) (*models.Pr
 func (s *ProductVariantService) Update(ctx context.Context, id int, req models.UpdateProductVariantRequest) error {
 	existing, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return errors.New("variant not found")
+		return errors.New("Variant not found")
 	}
+
 	if req.ProductID != nil {
 		existing.ProductID = *req.ProductID
 	}
@@ -44,6 +45,9 @@ func (s *ProductVariantService) Update(ctx context.Context, id int, req models.U
 		existing.VariantName = *req.VariantName
 	}
 	if req.AdditionalPrice != nil {
+		if *req.AdditionalPrice < 0 {
+			return errors.New("Additional price cannot be negative")
+		}
 		existing.AdditionalPrice = *req.AdditionalPrice
 	}
 
