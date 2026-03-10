@@ -28,21 +28,18 @@ func (r *ProductRepository) FindAll(ctx context.Context) ([]models.Product, erro
 	}
 	defer rows.Close()
 
-	var products []models.Product
-	for rows.Next() {
-		var p models.Product
-		if err := rows.Scan(&p.IDProduct, &p.Name, &p.Desc, &p.Price, &p.Quantity, &p.IsActive); err != nil {
-			return nil, err
-		}
-		products = append(products, p)
-	}
-	return products, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Product])
 }
 
 func (r *ProductRepository) FindByID(ctx context.Context, id int) (*models.Product, error) {
 	query := `SELECT id_product, name, "desc", price, quantity, is_active FROM products WHERE id_product = $1`
-	var p models.Product
-	err := r.db.QueryRow(ctx, query, id).Scan(&p.IDProduct, &p.Name, &p.Desc, &p.Price, &p.Quantity, &p.IsActive)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	p, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Product])
 	if err != nil {
 		return nil, err
 	}
