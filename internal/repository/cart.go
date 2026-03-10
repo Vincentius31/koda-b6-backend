@@ -28,22 +28,18 @@ func (r *CartRepository) FindAll(ctx context.Context) ([]models.Cart, error) {
 	}
 	defer rows.Close()
 
-	var carts []models.Cart
-	for rows.Next() {
-		var c models.Cart
-		err := rows.Scan(&c.IDCart, &c.UserID, &c.ProductID, &c.VariantID, &c.SizeID, &c.Quantity)
-		if err != nil {
-			return nil, err
-		}
-		carts = append(carts, c)
-	}
-	return carts, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Cart])
 }
 
 func (r *CartRepository) FindByID(ctx context.Context, id int) (*models.Cart, error) {
-	var c models.Cart
 	query := `SELECT id_cart, user_id, product_id, variant_id, size_id, quantity FROM cart WHERE id_cart = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(&c.IDCart, &c.UserID, &c.ProductID, &c.VariantID, &c.SizeID, &c.Quantity)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	c, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Cart])
 	if err != nil {
 		return nil, err
 	}
