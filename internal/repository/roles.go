@@ -7,14 +7,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type RoleRepository struct{
+type RoleRepository struct {
 	db *pgx.Conn
 }
 
-func NewRoleRepository(db *pgx.Conn) *RoleRepository{
-	return &RoleRepository{
-		db: db,
-	}
+func NewRoleRepository(db *pgx.Conn) *RoleRepository {
+	return &RoleRepository{db: db}
 }
 
 func (r *RoleRepository) Create(ctx context.Context, role models.Role) error {
@@ -23,30 +21,26 @@ func (r *RoleRepository) Create(ctx context.Context, role models.Role) error {
 	return err
 }
 
-func (r *RoleRepository) FindAll(ctx context.Context)([]models.Role, error){
+func (r *RoleRepository) FindAll(ctx context.Context) ([]models.Role, error) {
 	query := `SELECT id_roles, name_roles FROM roles`
 	rows, err := r.db.Query(ctx, query)
-
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var roles []models.Role
-	for rows.Next(){
-		var role models.Role
-		if err := rows.Scan(&role.IDRoles, &role.NameRoles); err != nil {
-			return nil, err
-		}
-		roles = append(roles, role)
-	}
-	return roles, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Role])
 }
 
 func (r *RoleRepository) FindByID(ctx context.Context, id int) (*models.Role, error) {
 	query := `SELECT id_roles, name_roles FROM roles WHERE id_roles = $1`
-	var role models.Role
-	err := r.db.QueryRow(ctx, query, id).Scan(&role.IDRoles, &role.NameRoles)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	role, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Role])
 	if err != nil {
 		return nil, err
 	}
