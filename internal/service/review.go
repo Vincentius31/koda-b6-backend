@@ -36,8 +36,9 @@ func (s *ReviewService) GetByID(ctx context.Context, id int) (*models.Review, er
 func (s *ReviewService) Update(ctx context.Context, id int, req models.UpdateReviewRequest) error {
 	existing, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return errors.New("review not found")
+		return errors.New("Review not found")
 	}
+
 	if req.UserID != nil {
 		existing.UserID = *req.UserID
 	}
