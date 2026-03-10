@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
 	"koda-b6-backend/internal/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type ProductVariantRepository struct {
@@ -28,19 +29,18 @@ func (r *ProductVariantRepository) FindAll(ctx context.Context) ([]models.Produc
 	}
 	defer rows.Close()
 
-	var variants []models.ProductVariant
-	for rows.Next() {
-		var v models.ProductVariant
-		rows.Scan(&v.IDVariant, &v.ProductID, &v.VariantName, &v.AdditionalPrice)
-		variants = append(variants, v)
-	}
-	return variants, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductVariant])
 }
 
 func (r *ProductVariantRepository) FindByID(ctx context.Context, id int) (*models.ProductVariant, error) {
-	var v models.ProductVariant
 	query := `SELECT id_variant, product_id, variant_name, additional_price FROM product_variant WHERE id_variant = $1`
-	err := r.db.QueryRow(ctx, query, id).Scan(&v.IDVariant, &v.ProductID, &v.VariantName, &v.AdditionalPrice)
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	v, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.ProductVariant])
 	if err != nil {
 		return nil, err
 	}
