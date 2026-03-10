@@ -35,8 +35,9 @@ func (s *ProductSizeService) GetByID(ctx context.Context, id int) (*models.Produ
 func (s *ProductSizeService) Update(ctx context.Context, id int, req models.UpdateProductSizeRequest) error {
 	existing, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return errors.New("size not found")
+		return errors.New("Size not found")
 	}
+
 	if req.ProductID != nil {
 		existing.ProductID = *req.ProductID
 	}
@@ -44,6 +45,9 @@ func (s *ProductSizeService) Update(ctx context.Context, id int, req models.Upda
 		existing.SizeName = *req.SizeName
 	}
 	if req.AdditionalPrice != nil {
+		if *req.AdditionalPrice < 0 {
+			return errors.New("Additional price cannot be negative")
+		}
 		existing.AdditionalPrice = *req.AdditionalPrice
 	}
 
