@@ -41,8 +41,9 @@ func (s *ProductService) GetByID(ctx context.Context, id int) (*models.Product, 
 func (s *ProductService) Update(ctx context.Context, id int, req models.UpdateProductRequest) error {
 	existing, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return errors.New("product not found")
+		return errors.New("Product not found")
 	}
+
 	if req.Name != nil {
 		existing.Name = *req.Name
 	}
@@ -50,9 +51,15 @@ func (s *ProductService) Update(ctx context.Context, id int, req models.UpdatePr
 		existing.Desc = *req.Desc
 	}
 	if req.Price != nil {
+		if *req.Price < 0 {
+			return errors.New("Price cannot be negative")
+		}
 		existing.Price = *req.Price
 	}
 	if req.Quantity != nil {
+		if *req.Quantity < 0 {
+			return errors.New("Quantity cannot be negative")
+		}
 		existing.Quantity = *req.Quantity
 	}
 	if req.IsActive != nil {
