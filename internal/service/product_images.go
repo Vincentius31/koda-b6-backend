@@ -32,6 +32,7 @@ func (s *ProductImageService) Update(ctx context.Context, id int, req models.Upd
 	if err != nil {
 		return errors.New("Image not found")
 	}
+
 	if req.ProductID != nil {
 		existing.ProductID = *req.ProductID
 	}
