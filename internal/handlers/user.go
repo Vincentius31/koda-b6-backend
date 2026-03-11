@@ -16,45 +16,9 @@ type UserHandler struct {
 }
 
 func NewUserHandler(s *service.UserService) *UserHandler {
-	return &UserHandler{service: s}
-}
-
-// Login godoc
-// @Summary User Login
-// @Description Authenticate user and return JWT token
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param request body models.LoginRequest true "Login Credentials"
-// @Success 200 {object} models.WebResponse
-// @Failure 401 {object} models.WebResponse
-// @Router /login [post]
-func (h *UserHandler) Login(ctx *gin.Context) {
-	var req models.LoginRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.WebResponse{
-			Success: false,
-			Message: "Email and password are required",
-			Data:    nil,
-		})
-		return
+	return &UserHandler{
+		service: s,
 	}
-
-	token, err := h.service.Login(ctx.Request.Context(), req)
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, models.WebResponse{
-			Success: false,
-			Message: err.Error(),
-			Data:    nil,
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, models.WebResponse{
-		Success: true,
-		Message: "Login successful",
-		Data:    models.LoginResponse{Token: token},
-	})
 }
 
 // GetAll godoc
