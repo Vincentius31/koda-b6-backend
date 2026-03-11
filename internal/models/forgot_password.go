@@ -14,6 +14,12 @@ type VerifyOTPRequest struct {
 	OTPCode int    `json:"otp_code" binding:"required"`
 }
 
+type ResetPasswordRequest struct{
+	Email string `json:"email" binding:"required,email"`
+	OTPCode int    `json:"otp_code" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=5"`
+}
+
 type ForgotPasswordRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
