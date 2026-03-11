@@ -16,7 +16,7 @@ type ForgotPasswordService struct {
 	repoForgot *repository.ForgotPasswordRepository
 }
 
-func NewForgotPasswordRepositoryService(ru *repository.UserRepository, rf *repository.ForgotPasswordRepository) *ForgotPasswordService {
+func NewForgotPasswordService(ru *repository.UserRepository, rf *repository.ForgotPasswordRepository) *ForgotPasswordService {
 	return &ForgotPasswordService{
 		repoUser: ru,
 		repoForgot: rf,
