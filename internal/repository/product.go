@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"koda-b6-backend/internal/models"
 	"github.com/jackc/pgx/v5"
+	"koda-b6-backend/internal/models"
 )
 
 type ProductRepository struct {
@@ -56,4 +56,31 @@ func (r *ProductRepository) Delete(ctx context.Context, id int) error {
 	query := `DELETE FROM products WHERE id_product = $1`
 	_, err := r.db.Exec(ctx, query, id)
 	return err
+}
+
+func (r *ProductRepository) GetRecommended(ctx context.Context) ([]models.ProductLanding, error) {
+	query := `
+        SELECT 
+            p.id_product, 
+            p.name, 
+            p.desc, 
+            p.price,
+            (SELECT pi.path FROM product_images pi WHERE pi.product_id = p.id_product LIMIT 1) as image_path,
+            COUNT(rv.id_review) as total_review
+        FROM products p
+        LEFT JOIN review rv ON p.id_product = rv.product_id
+        WHERE p.is_active = TRUE
+        GROUP BY p.id_product
+        ORDER BY total_review DESC
+        LIMIT 4
+    `
+	
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductLanding])
 }
