@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"koda-b6-backend/internal/models"
 	"koda-b6-backend/internal/repository"
 	"math/big"
@@ -30,6 +31,8 @@ func (s *ForgotPasswordService) RequestForgotPassword(ctx context.Context, req m
 
     nBig, _ := rand.Int(rand.Reader, big.NewInt(900000))
     otpCode := int(nBig.Int64()) + 100000
+
+	fmt.Printf("OTP Request %s: %d\n", req.Email, otpCode)
 
     return s.repoForgot.CreateForgetRequest(ctx, req.Email, otpCode)
 }
