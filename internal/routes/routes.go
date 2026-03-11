@@ -25,8 +25,11 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	transactionProductHandler := container.TransactionProductHandler()
 	reviewHandler := container.ReviewHandler()
 
-	r.POST("/login", userHandler.Login)
-	r.POST("/register", userHandler.Create)
+	authRoutes := r.Group("/auth")
+	{
+		authRoutes.POST("/login", userHandler.Login)
+		authRoutes.POST("/register", userHandler.Create)
+	}
 
 	userRoutes := r.Group("/users")
 	userRoutes.Use(middleware.AuthMiddleware())
