@@ -25,6 +25,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	transactionProductHandler := container.TransactionProductHandler()
 	reviewHandler := container.ReviewHandler()
 	authHandler := container.AuthHandler()
+	landingHandler := container.LandingHandler()
 
 	authRoutes := r.Group("/auth")
 	{
@@ -32,6 +33,11 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/forgot-password", authHandler.RequestForgotPassword)
 		authRoutes.PATCH("/forgot-password", authHandler.ResetPassword)
+	}
+
+	landingRoutes := r.Group("/landing")
+	{
+		landingRoutes.GET("/recommended-products", landingHandler.GetRecommendedProducts)
 	}
 
 	adminRoutes := r.Group("/admin")
