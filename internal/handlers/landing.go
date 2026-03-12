@@ -35,3 +35,21 @@ func (h *LandingHandler) GetRecommendedProducts(ctx *gin.Context) {
 		Data:    products,
 	})
 }
+
+func (h *LandingHandler) GetLatestReviews(ctx *gin.Context) {
+	reviews, err := h.landingService.GetLatestReviews(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false,
+			Message: "Failed to retrieve review data",
+			Data:    nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.WebResponse{
+		Success: true,
+		Message: "Successfully retrieved the latest review",
+		Data:    reviews,
+	})
+}
