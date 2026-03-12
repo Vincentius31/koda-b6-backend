@@ -38,6 +38,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	landingRoutes := r.Group("/landing")
 	{
 		landingRoutes.GET("/recommended-products", landingHandler.GetRecommendedProducts)
+		landingRoutes.GET("/reviews", landingHandler.GetLatestReviews)
 	}
 
 	adminRoutes := r.Group("/admin")
