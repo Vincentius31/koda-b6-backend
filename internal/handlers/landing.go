@@ -1,0 +1,37 @@
+package handlers
+
+import (
+	"koda-b6-backend/internal/models"
+	"koda-b6-backend/internal/service"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+type LandingHandler struct {
+	landingService *service.LandingService
+}
+
+func NewLandingHandler(ls *service.LandingService) *LandingHandler {
+	return &LandingHandler{
+		landingService: ls,
+	}
+}
+
+func (h *LandingHandler) GetRecommendedProducts(ctx *gin.Context) {
+	products, err := h.landingService.GetRecommendedProducts(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false,
+			Message: "Failed to load recommended products",
+			Data:    nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.WebResponse{
+		Success: true,
+		Message: "Success to load recommended products",
+		Data:    products,
+	})
+}
