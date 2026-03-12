@@ -58,3 +58,23 @@ func (r *ReviewRepository) Delete(ctx context.Context, id int) error {
 	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
+
+func (r *ReviewRepository) GetLatestReviews(ctx context.Context) ([]models.ReviewLanding, error) {
+	query := `
+		SELECT 
+			u.fullname, 
+			r.messages, 
+			r.rating
+		FROM review r
+		JOIN users u ON r.user_id = u.id_user
+		ORDER BY r.id_review DESC
+		LIMIT 5
+	`
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.ReviewLanding])
+}
