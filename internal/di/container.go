@@ -168,7 +168,7 @@ func (c *Container) initDependencies() {
 	c.authHandler = handlers.NewAuthHandler(c.userService, c.forgotPasswordService)
 
 	//landing_page
-	c.landingService = service.NewLandingService(c.productRepo)
+	c.landingService = service.NewLandingService(c.productRepo, c.reviewRepo)
 	c.landingHandler = handlers.NewLandingHandler(c.landingService)
 }
 
