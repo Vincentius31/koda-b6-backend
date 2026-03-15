@@ -26,6 +26,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	reviewHandler := container.ReviewHandler()
 	authHandler := container.AuthHandler()
 	landingHandler := container.LandingHandler()
+	productPageHandler := container.ProductPageHandler()
 
 	authRoutes := r.Group("/auth")
 	{
@@ -40,6 +41,11 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		landingRoutes.GET("/recommended-products", landingHandler.GetRecommendedProducts)
 		landingRoutes.GET("/reviews", landingHandler.GetLatestReviews)
 	}
+
+		productPageRoutes := r.Group("/products")
+		{
+			productPageRoutes.GET("", productPageHandler.GetCatalog)
+		}
 
 	adminRoutes := r.Group("/admin")
 	{
