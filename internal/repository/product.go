@@ -2,8 +2,12 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
+	"fmt"
 	"koda-b6-backend/internal/models"
+	"strconv"
+	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type ProductRepository struct {
@@ -74,7 +78,7 @@ func (r *ProductRepository) GetRecommended(ctx context.Context) ([]models.Produc
         ORDER BY total_review DESC
         LIMIT 4
     `
-	
+
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -83,4 +87,96 @@ func (r *ProductRepository) GetRecommended(ctx context.Context) ([]models.Produc
 	defer rows.Close()
 
 	return pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductLanding])
+}
+
+func (r *ProductRepository) buildCatalogFilters(params map[string]string) (string, []interface{}) {
+	var conditions []string
+	var args []interface{}
+	counter := 1
+
+	// 1. Filter Search
+	if search := params["search"]; search != "" {
+		conditions = append(conditions, fmt.Sprintf("p.name ILIKE $%d", counter))
+		args = append(args, "%"+search+"%")
+		counter++
+	}
+
+	// 2. Filter Category
+	if cat := params["category"]; cat != "" {
+		conditions = append(conditions, fmt.Sprintf("c.name_category = $%d", counter))
+		args = append(args, cat)
+		counter++
+	}
+
+	// 3. Filter Price Range
+	minPrice := params["min_price"]
+	maxPrice := params["max_price"]
+	if minPrice != "" && maxPrice != "" {
+		conditions = append(conditions, fmt.Sprintf("p.price BETWEEN $%d AND $%d", counter, counter+1))
+		args = append(args, minPrice, maxPrice)
+		counter += 2
+	}
+
+	whereSQL := ""
+	if len(conditions) > 0 {
+		whereSQL = " AND " + strings.Join(conditions, " AND ")
+	}
+	return whereSQL, args
+}
+
+func (r *ProductRepository) GetCatalog(ctx context.Context, params map[string]string) (*models.ProductCatalogResponse, error) {
+	page, _ := strconv.Atoi(params["page"])
+	if page < 1 {
+		page = 1
+	}
+	limit := 6
+	offset := (page - 1) * limit
+
+	whereSQL, args := r.buildCatalogFilters(params)
+
+	// 1. Pagination
+	var total int
+	countQuery := `
+		SELECT COUNT(DISTINCT p.id_product) 
+		FROM products p
+		LEFT JOIN products_category pc ON p.id_product = pc.product_id
+		LEFT JOIN category c ON pc.category_id = c.id_category
+		WHERE p.is_active = TRUE ` + whereSQL
+	_ = r.db.QueryRow(ctx, countQuery, args...).Scan(&total)
+
+	// 2. Tampilkan data sesuai pagination
+	fetchQuery := `
+		SELECT 
+			p.id_product, p.name, p.desc, p.price,
+			COALESCE(d.discount_rate, 0) as discount_rate,
+			CAST(p.price - (p.price * COALESCE(d.discount_rate, 0)) AS INT) as discount_price,
+			COALESCE(AVG(rv.rating), 0) as rating,
+			COALESCE((SELECT path FROM product_images WHERE product_id = p.id_product LIMIT 1), '') as image_path
+		FROM products p
+		LEFT JOIN discount d ON p.id_product = d.product_id
+		LEFT JOIN review rv ON p.id_product = rv.product_id
+		LEFT JOIN products_category pc ON p.id_product = pc.product_id
+		LEFT JOIN category c ON pc.category_id = c.id_category
+		WHERE p.is_active = TRUE ` + whereSQL + `
+		GROUP BY p.id_product, d.discount_rate
+		ORDER BY p.id_product DESC
+		LIMIT $` + fmt.Sprint(len(args)+1) + ` OFFSET $` + fmt.Sprint(len(args)+2)
+
+	finalArgs := append(args, limit, offset)
+	rows, err := r.db.Query(ctx, fetchQuery, finalArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductCatalog])
+
+	return &models.ProductCatalogResponse{
+		Items: items,
+		Meta: models.PagingMeta{
+			TotalItems:  total,
+			TotalPages:  (total + limit - 1) / limit,
+			CurrentPage: page,
+		},
+	}, err
 }
