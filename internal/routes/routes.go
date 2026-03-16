@@ -42,10 +42,10 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		landingRoutes.GET("/reviews", landingHandler.GetLatestReviews)
 	}
 
-		productPageRoutes := r.Group("/products")
-		{
-			productPageRoutes.GET("", productPageHandler.GetCatalog)
-		}
+	productPageRoutes := r.Group("/products")
+	{
+		productPageRoutes.GET("", productPageHandler.GetCatalog)
+	}
 
 	adminRoutes := r.Group("/admin")
 	{
