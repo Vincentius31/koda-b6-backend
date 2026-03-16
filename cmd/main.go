@@ -55,5 +55,5 @@ func main() {
 
 	routes.SetupRoutes(r, conn)
 
-	r.Run(fmt.Sprintf("localhost:%s", os.Getenv("PORT")))
+	r.Run(fmt.Sprintf(":%s", os.Getenv("PORT")))
 }
