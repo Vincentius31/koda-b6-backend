@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type Review struct {
 	IDReview  int     `json:"id_review"`
 	UserID    int     `json:"user_id"`
@@ -25,8 +23,8 @@ type UpdateReviewRequest struct {
 }
 
 type ReviewLanding struct {
-	Fullname  string    `db:"fullname" json:"fullname"`
-	Messages  string    `db:"messages" json:"messages"`
-	Rating    float64   `db:"rating" json:"rating"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	Fullname       string  `db:"fullname" json:"fullname"`
+	ProfilePicture *string `db:"profile_picture" json:"profile_picture"`
+	Messages       string  `db:"messages" json:"messages"`
+	Rating         float64 `db:"rating" json:"rating"`
 }
