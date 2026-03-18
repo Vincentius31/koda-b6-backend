@@ -47,6 +47,14 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		productPageRoutes.GET("", productPageHandler.GetCatalog)
 	}
 
+	userRoutes := r.Group("/")
+	userRoutes.Use(middleware.AuthMiddleware())
+	{
+		userRoutes.GET("/profile", userHandler.GetProfile)
+		userRoutes.PATCH("/profile", userHandler.UpdateProfile)
+		userRoutes.POST("/profile/upload", userHandler.UploadProfile)
+	}
+
 	adminRoutes := r.Group("/admin")
 	{
 		userRoutes := adminRoutes.Group("/users")
