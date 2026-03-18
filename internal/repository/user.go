@@ -16,7 +16,7 @@ func NewUserRepository(db *pgx.Conn) *UserRepository {
 }
 
 func (r *UserRepository) GetAll(ctx context.Context) ([]models.User, error) {
-	query := `SELECT id_user, roles_id, fullname, email, password, address, phone, profile_picture FROM users`
+	query := `SELECT id_user, roles_id, fullname, email, password, address, phone, profile_picture, created_at, updated_at FROM users`
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]models.User, error) {
 }
 
 func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, error) {
-	query := `SELECT id_user, roles_id, fullname, email, password, address, phone, profile_picture FROM users WHERE id_user = $1`
+	query := `SELECT id_user, roles_id, fullname, email, password, address, phone, profile_picture, created_at, updated_at FROM users WHERE id_user = $1`
 	rows, err := r.db.Query(ctx, query, id)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, err
 }
 
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
-	query := `SELECT id_user, roles_id, fullname, email, password, address, phone, profile_picture FROM users WHERE email = $1`
+	query := `SELECT id_user, roles_id, fullname, email, password, address, phone, profile_picture, created_at, updated_at FROM users WHERE email = $1`
 	rows, err := r.db.Query(ctx, query, email)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (r *UserRepository) Create(ctx context.Context, u models.User) error {
 }
 
 func (r *UserRepository) Update(ctx context.Context, id int, u models.User) error {
-	query := `UPDATE users SET fullname=$1, email=$2, password=$3, address=$4, phone=$5, profile_picture=$6 WHERE id_user=$7`
+	query := `UPDATE users SET fullname=$1, email=$2, password=$3, address=$4, phone=$5, profile_picture=$6, updated_at=CURRENT_TIMESTAMP WHERE id_user=$7`
 	_, err := r.db.Exec(ctx, query, u.Fullname, u.Email, u.Password, u.Address, u.Phone, u.ProfilePicture, id)
 	return err
 }
