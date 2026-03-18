@@ -290,3 +290,70 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 		Data:    map[string]string{"url": "/uploads/users/" + filename},
 	})
 }
+
+// GetProfile godoc
+// @Summary Get current user profile
+// @Tags profile
+// @Produce json
+// @Success 200 {object} models.WebResponse
+// @Router /profile [get]
+func (h *UserHandler) GetProfile(ctx *gin.Context) {
+    userIdData, exists := ctx.Get("user_id")
+    if !exists {
+        ctx.JSON(http.StatusUnauthorized, models.WebResponse{Success: false, Message: "Unauthorized", Data: nil})
+        return
+    }
+
+    id := int(userIdData.(float64))
+
+    user, err := h.service.FindByID(ctx.Request.Context(), id)
+    if err != nil {
+        ctx.JSON(http.StatusNotFound, models.WebResponse{Success: false, Message: "User not found", Data: nil})
+        return
+    }
+
+    ctx.JSON(http.StatusOK, models.WebResponse{
+        Success: true,
+        Message: "Profile found",
+        Data:    user,
+    })
+}
+
+// UpdateProfile godoc
+// @Summary Update current user profile
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Param request body models.UpdateUserRequest true "Updated User Data"
+// @Success 200 {object} models.WebResponse
+// @Router /profile [patch]
+func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
+    userIdData, exists := ctx.Get("user_id")
+    if !exists {
+        ctx.JSON(http.StatusUnauthorized, models.WebResponse{Success: false, Message: "Unauthorized", Data: nil})
+        return
+    }
+
+    id := int(userIdData.(float64))
+
+    var req models.UpdateUserRequest
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: err.Error(), Data: nil})
+        return
+    }
+
+    if err := h.service.Update(ctx.Request.Context(), id, req); err != nil {
+        ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false, 
+			Message: err.Error(), 
+			Data: nil,
+		})
+        return
+    }
+
+    ctx.JSON(http.StatusOK, models.WebResponse{
+        Success: true,
+        Message: "Profile updated successfully",
+        Data:    nil,
+    })
+}
