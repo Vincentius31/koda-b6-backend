@@ -16,14 +16,14 @@ func corsMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Header("Access-Control-Allow-Origin", os.Getenv("FRONTEND_URL"))
 		ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		ctx.Header("Access-Control-Allow-Headers", "Content-Type,authorization")
+		ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, Origin")
 
 		if ctx.Request.Method == "OPTIONS" {
-			ctx.Data(http.StatusOK, "", []byte(""))
-		} else {
-			ctx.Next()
+			ctx.AbortWithStatus(http.StatusNoContent)
+			return
 		}
 
+		ctx.Next()
 	}
 }
 
@@ -33,8 +33,8 @@ func main() {
 	r := gin.Default()
 	r.Use(corsMiddleware())
 
-	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
-		os.Mkdir("uploads", 0755)
+	if _, err := os.Stat("uploads/users"); os.IsNotExist(err) {
+		os.MkdirAll("uploads/users", 0755)
 	}
 
 	r.Static("/uploads", "./uploads")
