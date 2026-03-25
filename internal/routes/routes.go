@@ -165,7 +165,6 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 			transactionProductRoutes.PATCH("/:id", transactionProductHandler.Update)
 			transactionProductRoutes.DELETE("/:id", transactionProductHandler.Delete)
 		}
-		
 	
 		reviewRoutes := adminRoutes.Group("/review")
 		{
