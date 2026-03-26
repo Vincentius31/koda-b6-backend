@@ -52,7 +52,7 @@ func (s *UserService) Login(ctx context.Context, req models.LoginRequest) (strin
 	claims := jwt.MapClaims{
 		"user_id": user.IDUser,
 		"email":   user.Email,
-		"exp":     time.Now().Add(time.Minute * 1).Unix(),
+		"exp":     time.Now().Add(time.Minute * 15).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
