@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -213,25 +214,18 @@ func (h *UserHandler) Delete(ctx *gin.Context) {
 // @Success 200 {object} models.WebResponse
 // @Router /users/{id}/upload [post]
 func (h *UserHandler) UploadProfile(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+	userIdFromToken, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, models.WebResponse{
 			Success: false,
-			Message: "Invalid User ID",
+			Message: "Unauthorized",
 			Data:    nil,
 		})
 		return
 	}
 
-	userIdFromToken := ctx.MustGet("user_id").(float64)
-	if int(userIdFromToken) != id {
-		ctx.JSON(http.StatusForbidden, models.WebResponse{
-			Success: false,
-			Message: "You can only change your own profile!",
-			Data:    nil,
-		})
-		return
-	}
+	// Konversi float64 (bawaan JSON/JWT) ke int
+	id := int(userIdFromToken.(float64))
 
 	file, err := ctx.FormFile("profile_image")
 	if err != nil {
@@ -243,7 +237,7 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 		return
 	}
 
-	ext := filepath.Ext(file.Filename)
+	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if ext != ".jpg" && ext != ".png" && ext != ".jpeg" {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false,
@@ -263,12 +257,12 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 	}
 
 	filename := fmt.Sprintf("%d_%s", id, file.Filename)
-	dst := "uploads/users/" + filename 
+	dst := "uploads/users/" + filename
 
 	if err := ctx.SaveUploadedFile(file, dst); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
-			Message: "Failed to save file",
+			Message: "Failed to save file. Make sure 'uploads/users/' folder exists!",
 			Data:    nil,
 		})
 		return
@@ -298,25 +292,25 @@ func (h *UserHandler) UploadProfile(ctx *gin.Context) {
 // @Success 200 {object} models.WebResponse
 // @Router /profile [get]
 func (h *UserHandler) GetProfile(ctx *gin.Context) {
-    userIdData, exists := ctx.Get("user_id")
-    if !exists {
-        ctx.JSON(http.StatusUnauthorized, models.WebResponse{Success: false, Message: "Unauthorized", Data: nil})
-        return
-    }
+	userIdData, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, models.WebResponse{Success: false, Message: "Unauthorized", Data: nil})
+		return
+	}
 
-    id := int(userIdData.(float64))
+	id := int(userIdData.(float64))
 
-    user, err := h.service.FindByID(ctx.Request.Context(), id)
-    if err != nil {
-        ctx.JSON(http.StatusNotFound, models.WebResponse{Success: false, Message: "User not found", Data: nil})
-        return
-    }
+	user, err := h.service.FindByID(ctx.Request.Context(), id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, models.WebResponse{Success: false, Message: "User not found", Data: nil})
+		return
+	}
 
-    ctx.JSON(http.StatusOK, models.WebResponse{
-        Success: true,
-        Message: "Profile found",
-        Data:    user,
-    })
+	ctx.JSON(http.StatusOK, models.WebResponse{
+		Success: true,
+		Message: "Profile found",
+		Data:    user,
+	})
 }
 
 // UpdateProfile godoc
@@ -328,32 +322,32 @@ func (h *UserHandler) GetProfile(ctx *gin.Context) {
 // @Success 200 {object} models.WebResponse
 // @Router /profile [patch]
 func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
-    userIdData, exists := ctx.Get("user_id")
-    if !exists {
-        ctx.JSON(http.StatusUnauthorized, models.WebResponse{Success: false, Message: "Unauthorized", Data: nil})
-        return
-    }
+	userIdData, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, models.WebResponse{Success: false, Message: "Unauthorized", Data: nil})
+		return
+	}
 
-    id := int(userIdData.(float64))
+	id := int(userIdData.(float64))
 
-    var req models.UpdateUserRequest
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: err.Error(), Data: nil})
-        return
-    }
+	var req models.UpdateUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: err.Error(), Data: nil})
+		return
+	}
 
-    if err := h.service.Update(ctx.Request.Context(), id, req); err != nil {
-        ctx.JSON(http.StatusInternalServerError, models.WebResponse{
-			Success: false, 
-			Message: err.Error(), 
-			Data: nil,
+	if err := h.service.Update(ctx.Request.Context(), id, req); err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false,
+			Message: err.Error(),
+			Data:    nil,
 		})
-        return
-    }
+		return
+	}
 
-    ctx.JSON(http.StatusOK, models.WebResponse{
-        Success: true,
-        Message: "Profile updated successfully",
-        Data:    nil,
-    })
+	ctx.JSON(http.StatusOK, models.WebResponse{
+		Success: true,
+		Message: "Profile updated successfully",
+		Data:    nil,
+	})
 }
