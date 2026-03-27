@@ -212,21 +212,47 @@ func (r *ProductRepository) GetFullDetailByID(ctx context.Context, id int) (*mod
 		detail.Images = append(detail.Images, path)
 	}
 
-	sizeRows, _ := r.db.Query(ctx, "SELECT size_name FROM product_size WHERE product_id = $1", id)
+	sizeRows, _ := r.db.Query(ctx, "SELECT size_name, additional_price FROM product_size WHERE product_id = $1", id)
 	defer sizeRows.Close()
 	for sizeRows.Next() {
-		var sName string
-		sizeRows.Scan(&sName)
-		detail.Sizes = append(detail.Sizes, sName)
+		var s models.DetailSize
+		sizeRows.Scan(&s.SizeName, &s.AdditionalPrice)
+		detail.Sizes = append(detail.Sizes, s)
 	}
 
-	varRows, _ := r.db.Query(ctx, "SELECT variant_name FROM product_variant WHERE product_id = $1", id)
+	varRows, _ := r.db.Query(ctx, "SELECT variant_name, additional_price FROM product_variant WHERE product_id = $1", id)
 	defer varRows.Close()
 	for varRows.Next() {
-		var vName string
-		varRows.Scan(&vName)
-		detail.Variants = append(detail.Variants, vName)
+		var v models.DetailVariant
+		varRows.Scan(&v.VariantName, &v.AdditionalPrice)
+		detail.Variants = append(detail.Variants, v)
 	}
 
 	return &detail, nil
+}
+
+func (r *ProductRepository) GetRandomRecommended(ctx context.Context, excludeID int, limit int) ([]models.ProductCatalog, error) {
+	query := `
+		SELECT 
+			p.id_product, p.name, p.desc, p.price,
+			COALESCE(d.discount_rate, 0) as discount_rate,
+			CAST(p.price - (p.price * COALESCE(d.discount_rate, 0)) AS INT) as discount_price,
+			COALESCE(AVG(rv.rating), 0) as rating,
+			COALESCE((SELECT path FROM product_images WHERE product_id = p.id_product LIMIT 1), '') as image_path
+		FROM products p
+		LEFT JOIN discount d ON p.id_product = d.product_id
+		LEFT JOIN review rv ON p.id_product = rv.product_id
+		WHERE p.is_active = TRUE AND p.id_product != $1
+		GROUP BY p.id_product, d.discount_rate
+		ORDER BY RANDOM() 
+		LIMIT $2
+	`
+
+	rows, err := r.db.Query(ctx, query, excludeID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductCatalog])
 }
