@@ -27,6 +27,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	authHandler := container.AuthHandler()
 	landingHandler := container.LandingHandler()
 	productPageHandler := container.ProductPageHandler()
+	productDetailHandler := container.ProductDetailHandler()
 
 	authRoutes := r.Group("/auth")
 	{
@@ -48,6 +49,10 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		productPageRoutes.GET("/promos", productPageHandler.GetPromos)
 	}
 
+	productDetailRoutes := r.Group("/detail-product")
+	{
+		productDetailRoutes.GET("/:id", productDetailHandler.GetDetail)
+	}
 	userRoutes := r.Group("/")
 	userRoutes.Use(middleware.AuthMiddleware())
 	{
