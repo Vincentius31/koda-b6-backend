@@ -180,3 +180,53 @@ func (r *ProductRepository) GetCatalog(ctx context.Context, params map[string]st
 		},
 	}, err
 }
+
+func (r *ProductRepository) GetFullDetailByID(ctx context.Context, id int) (*models.ProductDetail, error) {
+	query := `
+		SELECT 
+			p.id_product, p.name, p.desc, p.price,
+			COALESCE(d.discount_rate, 0) as discount_rate,
+			CAST(p.price - (p.price * COALESCE(d.discount_rate, 0)) AS INT) as discount_price,
+			COALESCE(AVG(rv.rating), 0) as rating,
+			COUNT(rv.id_review) as total_review
+		FROM products p
+		LEFT JOIN discount d ON p.id_product = d.product_id
+		LEFT JOIN review rv ON p.id_product = rv.product_id
+		WHERE p.id_product = $1
+		GROUP BY p.id_product, d.discount_rate`
+
+	var detail models.ProductDetail
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&detail.IDProduct, &detail.Name, &detail.Desc, &detail.Price,
+		&detail.DiscountRate, &detail.DiscountPrice, &detail.Rating, &detail.TotalReview,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	imgRows, _ := r.db.Query(ctx, "SELECT path FROM product_images WHERE product_id = $1", id)
+	defer imgRows.Close()
+	for imgRows.Next() {
+		var path string
+		imgRows.Scan(&path)
+		detail.Images = append(detail.Images, path)
+	}
+
+	sizeRows, _ := r.db.Query(ctx, "SELECT size_name FROM product_size WHERE product_id = $1", id)
+	defer sizeRows.Close()
+	for sizeRows.Next() {
+		var sName string
+		sizeRows.Scan(&sName)
+		detail.Sizes = append(detail.Sizes, sName)
+	}
+
+	varRows, _ := r.db.Query(ctx, "SELECT variant_name FROM product_variant WHERE product_id = $1", id)
+	defer varRows.Close()
+	for varRows.Next() {
+		var vName string
+		varRows.Scan(&vName)
+		detail.Variants = append(detail.Variants, vName)
+	}
+
+	return &detail, nil
+}
