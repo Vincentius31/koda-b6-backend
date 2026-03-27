@@ -46,7 +46,7 @@ func (h *ProductPageHandler) GetPromos(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
-			Message: "Failed to Fetch Promos!",
+			Message: "Gagal Fetch: " + err.Error(), 
 			Data:    nil,
 		})
 		return
