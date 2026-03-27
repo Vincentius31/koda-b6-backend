@@ -88,6 +88,10 @@ type Container struct {
 	//Product_page
 	productPageService *service.ProductPageService
 	productPageHandler *handlers.ProductPageHandler
+
+	//Prdouct_detail
+	productDetailService *service.DetailProductService
+	productDetailHandler *handlers.DetailProductHandler
 }
 
 func NewContainer(db *pgx.Conn) *Container {
@@ -178,6 +182,10 @@ func (c *Container) initDependencies() {
 	//Products_page
 	c.productPageService = service.NewProductPageService(c.productRepo, c.discountRepo)
 	c.productPageHandler = handlers.NewProductPageHandler(c.productPageService)
+
+	//Product_detail
+	c.productDetailService = service.NewDetailProductService(c.productRepo)
+	c.productDetailHandler = handlers.NewDetailProductHandler(c.productDetailService)
 }
 
 func (c *Container) UserHandler() *handlers.UserHandler {
@@ -242,4 +250,8 @@ func (c *Container) LandingHandler() *handlers.LandingHandler {
 
 func (c *Container) ProductPageHandler() *handlers.ProductPageHandler {
 	return c.productPageHandler
+}
+
+func (c *Container) ProductDetailHandler() *handlers.DetailProductHandler{
+	return c.productDetailHandler
 }
