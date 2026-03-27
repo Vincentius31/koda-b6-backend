@@ -21,23 +21,39 @@ func (r *DiscountRepository) Create(ctx context.Context, d models.Discount) erro
 }
 
 func (r *DiscountRepository) FindAll(ctx context.Context) ([]models.Discount, error) {
-	query := `
-        SELECT 
-            id_discount, 
-            product_id, 
-            COALESCE(discount_rate, 0) AS discount_rate, 
-            COALESCE(description, '') AS description, 
-            COALESCE(is_flash_sale, false) AS is_flash_sale 
-        FROM discount
-    `
+    query := `SELECT id_discount, product_id, COALESCE(discount_rate, 0), COALESCE(description, ''), COALESCE(is_flash_sale, false) FROM discount`
+    
+    rows, err := r.db.Query(ctx, query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
 
-	rows, err := r.db.Query(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+    var promos []models.Discount
+    
+    for rows.Next() {
+        var d models.Discount
+        
+        err := rows.Scan(
+            &d.IDDiscount, 
+            &d.ProductID, 
+            &d.DiscountRate, 
+            &d.Description, 
+            &d.IsFlashSale,
+        )
+        
+        if err != nil {
+            return nil, err 
+        }
+        
+        promos = append(promos, d)
+    }
 
-	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Discount])
+    if err = rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return promos, nil
 }
 
 func (r *DiscountRepository) FindByID(ctx context.Context, id int) (*models.Discount, error) {
