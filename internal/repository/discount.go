@@ -21,7 +21,16 @@ func (r *DiscountRepository) Create(ctx context.Context, d models.Discount) erro
 }
 
 func (r *DiscountRepository) FindAll(ctx context.Context) ([]models.Discount, error) {
-	query := `SELECT id_discount, product_id, discount_rate, description, is_flash_sale FROM discount`
+	query := `
+        SELECT 
+            id_discount, 
+            product_id, 
+            COALESCE(discount_rate, 0) AS discount_rate, 
+            COALESCE(description, '') AS description, 
+            COALESCE(is_flash_sale, false) AS is_flash_sale 
+        FROM discount
+    `
+
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
