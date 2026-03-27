@@ -21,21 +21,13 @@ func (s *DetailProductService) GetDetailByID(ctx context.Context, id int) (*mode
 		return nil, err
 	}
 
-	params := map[string]string{"page": "1", "limit": "3"}
-	recommended, err := s.productRepo.GetCatalog(ctx, params)
+	recommended, err := s.productRepo.GetRandomRecommended(ctx, id, 15)
 	if err != nil {
-		return nil, err
-	}
-
-	var finalRecommended []models.ProductCatalog
-	for _, item := range recommended.Items {
-		if item.IDProduct != id {
-			finalRecommended = append(finalRecommended, item)
-		}
+		recommended = []models.ProductCatalog{} 
 	}
 
 	return &models.ProductDetailResponse{
 		Product:     *detail,
-		Recommended: finalRecommended,
+		Recommended: recommended,
 	}, nil
 }
