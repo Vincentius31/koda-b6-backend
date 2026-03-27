@@ -40,3 +40,21 @@ func (h *ProductPageHandler) GetCatalog(ctx *gin.Context) {
 		Data:    result,
 	})
 }
+
+func (h *ProductPageHandler) GetPromos(ctx *gin.Context) {
+	result, err := h.service.GetAllPromos(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false,
+			Message: "Failed to Fetch Promos!",
+			Data:    nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.WebResponse{
+		Success: true,
+		Message: "Fetch Promos Successfully!",
+		Data:    result,
+	})
+}

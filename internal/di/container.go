@@ -176,7 +176,7 @@ func (c *Container) initDependencies() {
 	c.landingHandler = handlers.NewLandingHandler(c.landingService)
 
 	//Products_page
-	c.productPageService = service.NewProductPageService(c.productRepo)
+	c.productPageService = service.NewProductPageService(c.productRepo, c.discountRepo)
 	c.productPageHandler = handlers.NewProductPageHandler(c.productPageService)
 }
 

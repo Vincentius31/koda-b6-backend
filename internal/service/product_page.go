@@ -7,15 +7,21 @@ import (
 )
 
 type ProductPageService struct {
-	productRepo *repository.ProductRepository
+	productRepo  *repository.ProductRepository
+	discountRepo *repository.DiscountRepository
 }
 
-func NewProductPageService(pr *repository.ProductRepository) *ProductPageService {
+func NewProductPageService(pr *repository.ProductRepository, dr *repository.DiscountRepository) *ProductPageService {
 	return &ProductPageService{
-		productRepo: pr,
+		productRepo:  pr,
+		discountRepo: dr,
 	}
 }
 
 func (s *ProductPageService) GetCatalogOnly(ctx context.Context, params map[string]string) (*models.ProductCatalogResponse, error) {
 	return s.productRepo.GetCatalog(ctx, params)
+}
+
+func (s *ProductPageService) GetAllPromos(ctx context.Context) ([]models.Discount, error) {
+	return s.discountRepo.FindAll(ctx)
 }

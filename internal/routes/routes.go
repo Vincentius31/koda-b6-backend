@@ -45,6 +45,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	productPageRoutes := r.Group("/products")
 	{
 		productPageRoutes.GET("", productPageHandler.GetCatalog)
+		productPageRoutes.GET("/promos", productPageHandler.GetPromos)
 	}
 
 	userRoutes := r.Group("/")
