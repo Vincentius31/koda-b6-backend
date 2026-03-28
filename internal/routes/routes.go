@@ -53,12 +53,20 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 	{
 		productDetailRoutes.GET("/:id", productDetailHandler.GetDetail)
 	}
+
 	userRoutes := r.Group("/")
 	userRoutes.Use(middleware.AuthMiddleware())
 	{
+		//Profile
 		userRoutes.GET("/profile", userHandler.GetProfile)
 		userRoutes.PATCH("/profile", userHandler.UpdateProfile)
 		userRoutes.POST("/profile/upload", userHandler.UploadProfile)
+
+		//Cart
+		userRoutes.GET("/cart", cartHandler.GetUserCart)
+		userRoutes.POST("/cart", cartHandler.Create)
+		userRoutes.PATCH("/cart/:id", cartHandler.Update)
+		userRoutes.DELETE("/cart/:id", cartHandler.Delete)
 	}
 
 	adminRoutes := r.Group("/admin")
@@ -143,15 +151,6 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 			discountRoutes.POST("", discountHandler.Create)
 			discountRoutes.PATCH("/:id", discountHandler.Update)
 			discountRoutes.DELETE("/:id", discountHandler.Delete)
-		}
-	
-		cartRoutes := adminRoutes.Group("/cart")
-		{
-			cartRoutes.GET("", cartHandler.GetAll)
-			cartRoutes.GET("/:id", cartHandler.GetByID)
-			cartRoutes.POST("", cartHandler.Create)
-			cartRoutes.PATCH("/:id", cartHandler.Update)
-			cartRoutes.DELETE("/:id", cartHandler.Delete)
 		}
 	
 		transactionRoutes := adminRoutes.Group("/transaction")
