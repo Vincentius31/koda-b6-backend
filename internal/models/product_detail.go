@@ -1,11 +1,13 @@
 package models
 
 type DetailSize struct {
+	IDSize          int    `json:"id_size"`
 	SizeName        string `json:"size_name"`
 	AdditionalPrice int    `json:"additional_price"`
 }
 
 type DetailVariant struct {
+	IDVariant       int    `json:"id_variant"`
 	VariantName     string `json:"variant_name"`
 	AdditionalPrice int    `json:"additional_price"`
 }
