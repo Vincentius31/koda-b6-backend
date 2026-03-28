@@ -26,40 +26,15 @@ func (s *CartService) Create(ctx context.Context, req models.CreateCartRequest) 
 	return s.repo.Create(ctx, cart)
 }
 
-func (s *CartService) GetAll(ctx context.Context) ([]models.Cart, error) {
-	return s.repo.FindAll(ctx)
+func (s *CartService) GetUserCart(ctx context.Context, userID int) ([]models.CartItemResponse, error) {
+	return s.repo.FindByUserID(ctx, userID)
 }
 
-func (s *CartService) GetByID(ctx context.Context, id int) (*models.Cart, error) {
-	return s.repo.FindByID(ctx, id)
-}
-
-func (s *CartService) Update(ctx context.Context, id int, req models.UpdateCartRequest) error {
-	existing, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		return errors.New("Cart item not found")
+func (s *CartService) UpdateQty(ctx context.Context, id int, req models.UpdateCartRequest) error {
+	if req.Quantity == nil || *req.Quantity < 1 {
+		return errors.New("Quantity must be at least 1")
 	}
-
-	if req.UserID != nil {
-		existing.UserID = *req.UserID
-	}
-	if req.ProductID != nil {
-		existing.ProductID = *req.ProductID
-	}
-	if req.VariantID != nil {
-		existing.VariantID = req.VariantID
-	}
-	if req.SizeID != nil {
-		existing.SizeID = req.SizeID
-	}
-	if req.Quantity != nil {
-		if *req.Quantity < 1 {
-			return errors.New("Quantity must be at least 1")
-		}
-		existing.Quantity = *req.Quantity
-	}
-
-	return s.repo.Update(ctx, id, *existing)
+	return s.repo.UpdateQty(ctx, id, *req.Quantity)
 }
 
 func (s *CartService) Delete(ctx context.Context, id int) error {
