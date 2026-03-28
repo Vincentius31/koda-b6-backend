@@ -212,19 +212,19 @@ func (r *ProductRepository) GetFullDetailByID(ctx context.Context, id int) (*mod
 		detail.Images = append(detail.Images, path)
 	}
 
-	sizeRows, _ := r.db.Query(ctx, "SELECT size_name, additional_price FROM product_size WHERE product_id = $1", id)
+	sizeRows, _ := r.db.Query(ctx, "SELECT id_size, size_name, additional_price FROM product_size WHERE product_id = $1", id)
 	defer sizeRows.Close()
 	for sizeRows.Next() {
 		var s models.DetailSize
-		sizeRows.Scan(&s.SizeName, &s.AdditionalPrice)
+		sizeRows.Scan(&s.IDSize, &s.SizeName, &s.AdditionalPrice)
 		detail.Sizes = append(detail.Sizes, s)
 	}
 
-	varRows, _ := r.db.Query(ctx, "SELECT variant_name, additional_price FROM product_variant WHERE product_id = $1", id)
+	varRows, _ := r.db.Query(ctx, "SELECT id_variant, variant_name, additional_price FROM product_variant WHERE product_id = $1", id)
 	defer varRows.Close()
 	for varRows.Next() {
 		var v models.DetailVariant
-		varRows.Scan(&v.VariantName, &v.AdditionalPrice)
+		varRows.Scan(&v.IDVariant, &v.VariantName, &v.AdditionalPrice)
 		detail.Variants = append(detail.Variants, v)
 	}
 
