@@ -17,30 +17,43 @@ func NewCartHandler(s *service.CartService) *CartHandler {
 	return &CartHandler{service: s}
 }
 
-func (h *CartHandler) Create(ctx *gin.Context) {
-	userIDVal, exists := ctx.Get("userID")
+func getIDFromContext(ctx *gin.Context) (int, bool) {
+	val, exists := ctx.Get("user_id")
 	if !exists {
+		val, exists = ctx.Get("userID")
+	}
+
+	if !exists {
+		return 0, false
+	}
+
+	switch v := val.(type) {
+	case int:
+		return v, true
+	case float64:
+		return int(v), true
+	case string:
+		id, _ := strconv.Atoi(v)
+		return id, true
+	default:
+		return 0, false
+	}
+}
+
+func (h *CartHandler) Create(ctx *gin.Context) {
+	userID, ok := getIDFromContext(ctx)
+	if !ok {
 		ctx.JSON(http.StatusUnauthorized, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: "Unauthorized. Please login.",
 		})
 		return
 	}
 
-	var userID int
-	switch v := userIDVal.(type) {
-	case int:
-		userID = v
-	case float64:
-		userID = int(v)
-	case string:
-		userID, _ = strconv.Atoi(v)
-	}
-
 	var req models.CreateCartRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: err.Error(),
 		})
 		return
@@ -50,49 +63,41 @@ func (h *CartHandler) Create(ctx *gin.Context) {
 
 	if err := h.service.Create(ctx.Request.Context(), req); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: "Failed to add to cart: " + err.Error(),
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusCreated, models.WebResponse{
-		Success: true, 
+		Success: true,
 		Message: "Item added to cart",
 	})
 }
 
 func (h *CartHandler) GetUserCart(ctx *gin.Context) {
-	userIDVal, exists := ctx.Get("userID")
-	if !exists {
+	userID, ok := getIDFromContext(ctx)
+	if !ok {
 		ctx.JSON(http.StatusUnauthorized, models.WebResponse{
-			Success: false, 
-			Message: "Unauthorized",
+			Success: false,
+			Message: "Unauthorized access",
 		})
 		return
-	}
-
-	var userID int
-	switch v := userIDVal.(type) {
-	case int:
-		userID = v
-	case float64:
-		userID = int(v)
-	case string:
-		userID, _ = strconv.Atoi(v)
 	}
 
 	data, err := h.service.GetUserCart(ctx.Request.Context(), userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: err.Error(),
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, models.WebResponse{
-		Success: true, 
-		Message: "Cart retrieved successfully", 
-		Data: data,
+		Success: true,
+		Message: "Cart retrieved successfully",
+		Data:    data,
 	})
 }
 
@@ -101,17 +106,22 @@ func (h *CartHandler) Update(ctx *gin.Context) {
 	var req models.UpdateCartRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: err.Error(),
 		})
 		return
 	}
+
 	if err := h.service.UpdateQty(ctx.Request.Context(), id, req); err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: err.Error()})
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false,
+			Message: err.Error(),
+		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, models.WebResponse{
-		Success: true, 
+		Success: true,
 		Message: "Cart updated",
 	})
 }
@@ -120,13 +130,14 @@ func (h *CartHandler) Delete(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	if err := h.service.Delete(ctx.Request.Context(), id); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
-			Success: false, 
+			Success: false,
 			Message: err.Error(),
 		})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, models.WebResponse{
-		Success: true, 
+		Success: true,
 		Message: "Item removed from cart",
 	})
 }
