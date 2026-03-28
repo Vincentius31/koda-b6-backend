@@ -11,27 +11,25 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func AuthMiddleware() gin.HandlerFunc{
+func AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		if authHeader == "" {
-			ctx.JSON(http.StatusUnauthorized, models.WebResponse{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, models.WebResponse{
 				Success: false,
 				Message: "Authorization header is required",
-				Data: nil,
+				Data:    nil,
 			})
-			ctx.Abort()
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			ctx.JSON(http.StatusUnauthorized, models.WebResponse{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, models.WebResponse{
 				Success: false,
 				Message: "Invalid authorization format. Please use 'Bearer <token>'",
-				Data: nil,
+				Data:    nil,
 			})
-			ctx.Abort()
 			return
 		}
 
@@ -40,25 +38,35 @@ func AuthMiddleware() gin.HandlerFunc{
 
 		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
 			return []byte(secret), nil
 		})
 
+		// Jika token expired atau signature salah
 		if err != nil || !token.Valid {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, models.WebResponse{
 				Success: false,
 				Message: "Invalid or expired token",
-				Data: nil,
+				Data:    nil,
 			})
-			return 
+			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if ok && token.Valid {
-			ctx.Set("user_id", claims["user_id"])
+			if userIDFloat, exists := claims["user_id"].(float64); exists {
+				ctx.Set("user_id", int(userIDFloat))
+			}
+			
 			ctx.Set("email", claims["email"])
+			ctx.Next() 
+		} else {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, models.WebResponse{
+				Success: false,
+				Message: "Unauthorized. Please login.",
+				Data:    nil,
+			})
 		}
-		ctx.Next()
 	}
 }
