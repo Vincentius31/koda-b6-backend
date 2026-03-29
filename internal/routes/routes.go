@@ -37,6 +37,7 @@ func SetupRoutes(r *gin.Engine, conn *pgx.Conn) {
 		authRoutes.PATCH("/forgot-password", authHandler.ResetPassword)
 	}
 
+	
 	landingRoutes := r.Group("/landing")
 	{
 		landingRoutes.GET("/recommended-products", landingHandler.GetRecommendedProducts)
