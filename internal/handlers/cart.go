@@ -102,7 +102,15 @@ func (h *CartHandler) GetUserCart(ctx *gin.Context) {
 }
 
 func (h *CartHandler) Update(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false,
+			Message: "Invalid cart ID format",
+		})
+		return
+	}
+
 	var req models.UpdateCartRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
@@ -127,7 +135,15 @@ func (h *CartHandler) Update(ctx *gin.Context) {
 }
 
 func (h *CartHandler) Delete(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false,
+			Message: "Invalid cart ID format",
+		})
+		return
+	}
+
 	if err := h.service.Delete(ctx.Request.Context(), id); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,

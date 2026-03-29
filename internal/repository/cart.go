@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"koda-b6-backend/internal/models"
 
@@ -16,7 +17,6 @@ func NewCartRepository(db *pgx.Conn) *CartRepository {
 	return &CartRepository{db: db}
 }
 
-// Logika Upsert (Cek & Update jika ada, Insert jika baru)
 func (r *CartRepository) Create(ctx context.Context, c models.Cart) error {
 	var existingID, existingQty int
 
@@ -47,12 +47,15 @@ func (r *CartRepository) Create(ctx context.Context, c models.Cart) error {
 		return updateErr
 	}
 
-	queryInsert := `INSERT INTO cart (user_id, product_id, variant_id, size_id, quantity) VALUES ($1, $2, $3, $4, $5)`
-	_, errInsert := r.db.Exec(ctx, queryInsert, c.UserID, c.ProductID, c.VariantID, c.SizeID, c.Quantity)
-	return errInsert
+	if errors.Is(err, pgx.ErrNoRows) || err.Error() == "No rows in result set" {
+		queryInsert := `INSERT INTO cart (user_id, product_id, variant_id, size_id, quantity) VALUES ($1, $2, $3, $4, $5)`
+		_, errInsert := r.db.Exec(ctx, queryInsert, c.UserID, c.ProductID, c.VariantID, c.SizeID, c.Quantity)
+		return errInsert
+	}
+
+	return err
 }
 
-// Fitur Join tabel agar frontend gampang membacanya (Bebas error rows.Scan)
 func (r *CartRepository) FindByUserID(ctx context.Context, userID int) ([]models.CartItemResponse, error) {
 	query := `
         SELECT 
@@ -83,7 +86,6 @@ func (r *CartRepository) FindByUserID(ctx context.Context, userID int) ([]models
 	}
 	defer rows.Close()
 
-    // Langsung collect secara otomatis ke Struct
 	return pgx.CollectRows(rows, pgx.RowToStructByName[models.CartItemResponse])
 }
 
