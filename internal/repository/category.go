@@ -2,16 +2,20 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
 	"koda-b6-backend/internal/models"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type CategoryRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewCategoryRepository(db *pgx.Conn) *CategoryRepository {
-	return &CategoryRepository{db: db}
+func NewCategoryRepository(db *pgxpool.Pool) *CategoryRepository {
+	return &CategoryRepository{
+		db: db,
+	}
 }
 
 func (r *CategoryRepository) Create(ctx context.Context, category models.Category) error {

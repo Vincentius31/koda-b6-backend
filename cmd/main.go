@@ -6,9 +6,10 @@ import (
 	"koda-b6-backend/internal/routes"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
@@ -36,24 +37,49 @@ func main() {
 	if _, err := os.Stat("uploads/users"); os.IsNotExist(err) {
 		os.MkdirAll("uploads/users", 0755)
 	}
-
 	r.Static("/uploads", "./uploads")
 
-	connConfig, err := pgx.ParseConfig("")
-
-	if err != nil {
-		fmt.Println("Failed to parse config")
+	// 1. Konfigurasi Database URL dari .env
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		fmt.Println("DATABASE_URL is not set in .env")
 		return
 	}
 
-	conn, err := pgx.Connect(context.Background(), connConfig.ConnString())
+	// 2. Setup pgxpool
+	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
-		fmt.Println("Connection Failed")
+		fmt.Fprintf(os.Stderr, "Unable to parse connection string: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Opsional: Atur batas koneksi agar lebih optimal
+	config.MaxConns = 20
+	config.MinConns = 5
+	config.MaxConnIdleTime = 30 * time.Minute
+
+	// 3. Membuat Pool Koneksi
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database pool: %v\n", err)
+		os.Exit(1)
+	}
+	defer pool.Close() // Tutup pool saat aplikasi berhenti
+
+	// Cek koneksi ke DB
+	err = pool.Ping(context.Background())
+	if err != nil {
+		fmt.Println("Database connection test failed")
 		return
 	}
-	defer conn.Close(context.Background())
+	fmt.Println("Successfully connected to the database with connection pool!")
 
-	routes.SetupRoutes(r, conn)
+	// 4. Kirim pool (bukan conn) ke routes
+	routes.SetupRoutes(r, pool)
 
-	r.Run(fmt.Sprintf(":%s", os.Getenv("PORT")))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8888"
+	}
+	r.Run(fmt.Sprintf(":%s", port))
 }

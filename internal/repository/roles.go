@@ -5,13 +5,14 @@ import (
 	"koda-b6-backend/internal/models"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type RoleRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewRoleRepository(db *pgx.Conn) *RoleRepository {
+func NewRoleRepository(db *pgxpool.Pool) *RoleRepository {
 	return &RoleRepository{db: db}
 }
 

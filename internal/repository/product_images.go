@@ -5,14 +5,17 @@ import (
 	"koda-b6-backend/internal/models"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ProductImageRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewProductImageRepository(db *pgx.Conn) *ProductImageRepository {
-	return &ProductImageRepository{db: db}
+func NewProductImageRepository(db *pgxpool.Pool) *ProductImageRepository {
+	return &ProductImageRepository{
+		db: db,
+	}
 }
 
 func (r *ProductImageRepository) Create(ctx context.Context, img models.ProductImage) error {

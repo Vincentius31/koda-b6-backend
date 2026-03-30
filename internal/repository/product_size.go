@@ -5,14 +5,17 @@ import (
 	"koda-b6-backend/internal/models"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ProductSizeRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewProductSizeRepository(db *pgx.Conn) *ProductSizeRepository {
-	return &ProductSizeRepository{db: db}
+func NewProductSizeRepository(db *pgxpool.Pool) *ProductSizeRepository {
+	return &ProductSizeRepository{
+		db: db,
+	}
 }
 
 func (r *ProductSizeRepository) Create(ctx context.Context, s models.ProductSize) error {

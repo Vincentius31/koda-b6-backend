@@ -4,12 +4,11 @@ import (
 	"koda-b6-backend/internal/handlers"
 	"koda-b6-backend/internal/repository"
 	"koda-b6-backend/internal/service"
-
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Container struct {
-	db *pgx.Conn
+	pool *pgxpool.Pool
 
 	//Users
 	userRepo    *repository.UserRepository
@@ -94,9 +93,9 @@ type Container struct {
 	productDetailHandler *handlers.DetailProductHandler
 }
 
-func NewContainer(db *pgx.Conn) *Container {
+func NewContainer(pool *pgxpool.Pool) *Container {
 	container := &Container{
-		db: db,
+		pool: pool,
 	}
 
 	container.initDependencies()
@@ -105,73 +104,75 @@ func NewContainer(db *pgx.Conn) *Container {
 }
 
 func (c *Container) initDependencies() {
+	// Ganti semua c.db menjadi c.pool
+	
 	//Users
-	c.userRepo = repository.NewUserRepository(c.db)
+	c.userRepo = repository.NewUserRepository(c.pool)
 	c.userService = service.NewUserService(c.userRepo)
 	c.userHandler = handlers.NewUserHandler(c.userService)
 
 	//Roles
-	c.roleRepo = repository.NewRoleRepository(c.db)
+	c.roleRepo = repository.NewRoleRepository(c.pool)
 	c.roleService = service.NewRoleService(c.roleRepo)
 	c.roleHandler = handlers.NewRoleHandler(c.roleService)
 
 	//Category
-	c.categoryRepo = repository.NewCategoryRepository(c.db)
+	c.categoryRepo = repository.NewCategoryRepository(c.pool)
 	c.categoryService = service.NewCategoryService(c.categoryRepo)
 	c.categoryHandler = handlers.NewCategoryHandler(c.categoryService)
 
 	//Product
-	c.productRepo = repository.NewProductRepository(c.db)
+	c.productRepo = repository.NewProductRepository(c.pool)
 	c.productService = service.NewProductService(c.productRepo)
 	c.productHandler = handlers.NewProductHandler(c.productService)
 
 	//Product_category
-	c.productCategoryRepo = repository.NewProductCategoryRepository(c.db)
+	c.productCategoryRepo = repository.NewProductCategoryRepository(c.pool)
 	c.productCategoryService = service.NewProductCategoryService(c.productCategoryRepo)
 	c.productCategoryHandler = handlers.NewProductCategoryHandler(c.productCategoryService)
 
 	//Product_image
-	c.productImageRepo = repository.NewProductImageRepository(c.db)
+	c.productImageRepo = repository.NewProductImageRepository(c.pool)
 	c.productImageService = service.NewProductImageService(c.productImageRepo)
 	c.productImageHandler = handlers.NewProductImageHandler(c.productImageService)
 
 	//Product_variant
-	c.productVariantRepo = repository.NewProductVariantRepository(c.db)
+	c.productVariantRepo = repository.NewProductVariantRepository(c.pool)
 	c.productVariantService = service.NewProductVariantService(c.productVariantRepo)
 	c.productVariantHandler = handlers.NewProductVariantHandler(c.productVariantService)
 
 	//Product_size
-	c.productSizeRepo = repository.NewProductSizeRepository(c.db)
+	c.productSizeRepo = repository.NewProductSizeRepository(c.pool)
 	c.productSizeService = service.NewProductSizeService(c.productSizeRepo)
 	c.productSizeHandler = handlers.NewProductSizeHandler(c.productSizeService)
 
 	//discount
-	c.discountRepo = repository.NewDiscountRepository(c.db)
+	c.discountRepo = repository.NewDiscountRepository(c.pool)
 	c.discountService = service.NewDiscountService(c.discountRepo)
 	c.discountHandler = handlers.NewDiscountHandler(c.discountService)
 
 	//cart
-	c.cartRepo = repository.NewCartRepository(c.db)
+	c.cartRepo = repository.NewCartRepository(c.pool)
 	c.cartService = service.NewCartService(c.cartRepo)
 	c.cartHandler = handlers.NewCartHandler(c.cartService)
 
 	//transaction
-	c.transactionRepo = repository.NewTransactionRepository(c.db)
+	c.transactionRepo = repository.NewTransactionRepository(c.pool)
 	c.transactionService = service.NewTransactionService(c.transactionRepo)
 	c.transactionHandler = handlers.NewTransactionHandler(c.transactionService)
 
 	//transaction_product
-	c.transactionProductRepo = repository.NewTransactionProductRepository(c.db)
+	c.transactionProductRepo = repository.NewTransactionProductRepository(c.pool)
 	c.transactionProductService = service.NewTransactionProductService(c.transactionProductRepo)
 	c.transactionProductHandler = handlers.NewTransactionProductHandler(c.transactionProductService)
 
 	//review
-	c.reviewRepo = repository.NewReviewRepository(c.db)
+	c.reviewRepo = repository.NewReviewRepository(c.pool)
 	c.reviewService = service.NewReviewService(c.reviewRepo)
 	c.reviewHandler = handlers.NewReviewHandler(c.reviewService)
 
 	//forgot_password
-	c.forgotPasswordRepo = repository.NewForgotPasswordRepository(c.db)
+	c.forgotPasswordRepo = repository.NewForgotPasswordRepository(c.pool)
 	c.forgotPasswordService = service.NewForgotPasswordService(c.userRepo, c.forgotPasswordRepo)
 	c.authHandler = handlers.NewAuthHandler(c.userService, c.forgotPasswordService)
 
@@ -252,6 +253,6 @@ func (c *Container) ProductPageHandler() *handlers.ProductPageHandler {
 	return c.productPageHandler
 }
 
-func (c *Container) ProductDetailHandler() *handlers.DetailProductHandler{
+func (c *Container) ProductDetailHandler() *handlers.DetailProductHandler {
 	return c.productDetailHandler
 }

@@ -2,16 +2,19 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
 	"koda-b6-backend/internal/models"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DiscountRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewDiscountRepository(db *pgx.Conn) *DiscountRepository {
-	return &DiscountRepository{db: db}
+func NewDiscountRepository(db *pgxpool.Pool) *DiscountRepository {
+	return &DiscountRepository{
+		db: db,
+	}
 }
 
 func (r *DiscountRepository) Create(ctx context.Context, d models.Discount) error {
