@@ -39,34 +39,29 @@ func main() {
 	}
 	r.Static("/uploads", "./uploads")
 
-	// 1. Konfigurasi Database URL dari .env
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
 		fmt.Println("DATABASE_URL is not set in .env")
 		return
 	}
 
-	// 2. Setup pgxpool
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to parse connection string: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Opsional: Atur batas koneksi agar lebih optimal
 	config.MaxConns = 20
 	config.MinConns = 5
 	config.MaxConnIdleTime = 30 * time.Minute
 
-	// 3. Membuat Pool Koneksi
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database pool: %v\n", err)
 		os.Exit(1)
 	}
-	defer pool.Close() // Tutup pool saat aplikasi berhenti
+	defer pool.Close()
 
-	// Cek koneksi ke DB
 	err = pool.Ping(context.Background())
 	if err != nil {
 		fmt.Println("Database connection test failed")
@@ -74,7 +69,6 @@ func main() {
 	}
 	fmt.Println("Successfully connected to the database with connection pool!")
 
-	// 4. Kirim pool (bukan conn) ke routes
 	routes.SetupRoutes(r, pool)
 
 	port := os.Getenv("PORT")
