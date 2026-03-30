@@ -48,6 +48,8 @@ func AuthMiddleware() gin.HandlerFunc {
 				Success: false,
 				Message: "Invalid or expired token",
 			})
+			ctx.Abort()
+			return 
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
