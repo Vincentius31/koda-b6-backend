@@ -41,12 +41,12 @@ func (s *UserService) Login(ctx context.Context, req models.LoginRequest) (strin
 	user, err := s.repo.GetByEmail(ctx, req.Email)
 
 	if err != nil {
-		return "", errors.New("Invalid email or password")
+		return "", errors.New("Invalid email or wrong password")
 	}
 
 	ok, err := argon2.VerifyEncoded([]byte(req.Password), []byte(user.Password))
 	if err != nil || !ok {
-		return "", errors.New("Invalid Email or Password")
+		return "", errors.New("Wrong email or password")
 	}
 
 	claims := jwt.MapClaims{
