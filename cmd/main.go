@@ -29,7 +29,10 @@ func corsMiddleware() gin.HandlerFunc {
 }
 
 func main() {
-	godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Warning: .env file not found, using system environment variables")
+	}
 
 	r := gin.Default()
 	r.Use(corsMiddleware())
@@ -39,35 +42,32 @@ func main() {
 	}
 	r.Static("/uploads", "./uploads")
 
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		fmt.Println("DATABASE_URL is not set in .env")
-		return
-	}
-
-	config, err := pgxpool.ParseConfig(databaseURL)
+	config, err := pgxpool.ParseConfig("")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to parse connection string: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to process database configuration: %v\n", err)
 		os.Exit(1)
 	}
 
-	config.MaxConns = 20
-	config.MinConns = 5
-	config.MaxConnIdleTime = 30 * time.Minute
+	config.MaxConns = 20                    
+	config.MinConns = 5                       
+	config.MaxConnIdleTime = 30 * time.Minute 
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database pool: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to create database connection pool: %v\n", err)
 		os.Exit(1)
 	}
 	defer pool.Close()
 
-	err = pool.Ping(context.Background())
-	if err != nil {
-		fmt.Println("Database connection test failed")
-		return
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := pool.Ping(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "The database is not responding: %v\n", err)
+		os.Exit(1)
 	}
-	fmt.Println("Successfully connected to the database with connection pool!")
+
+	fmt.Println("Successfully connected to the database")
 
 	routes.SetupRoutes(r, pool)
 
@@ -75,5 +75,6 @@ func main() {
 	if port == "" {
 		port = "8888"
 	}
+	fmt.Printf("The server runs on the port %s...\n", port)
 	r.Run(fmt.Sprintf(":%s", port))
 }
