@@ -68,6 +68,9 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 		userRoutes.POST("/cart", cartHandler.Create)
 		userRoutes.PATCH("/cart/:id", cartHandler.Update)
 		userRoutes.DELETE("/cart/:id", cartHandler.Delete)
+
+		//Checkout
+		userRoutes.POST("/checkout", transactionHandler.Checkout)
 	}
 
 	adminRoutes := r.Group("/admin")
