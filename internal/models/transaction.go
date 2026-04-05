@@ -33,3 +33,24 @@ type UpdateTransactionRequest struct {
 	Status            *string `json:"status"`
 	PaymentMethod     *string `json:"payment_method"`
 }
+
+type CheckoutItem struct {
+	ProductID int    `json:"product_id" binding:"required"`
+	Quantity  int    `json:"quantity" binding:"required,min=1"`
+	Size      string `json:"size"`
+	Variant   string `json:"variant"`
+	Price     int    `json:"price" binding:"required"`
+}
+
+type CheckoutRequest struct {
+	DeliveryMethod string         `json:"delivery_method" binding:"required"`
+	Subtotal       int            `json:"subtotal" binding:"required"`
+	Total          int            `json:"total" binding:"required"`
+	PaymentMethod  string         `json:"payment_method" binding:"required"`
+	Items          []CheckoutItem `json:"items" binding:"required,min=1"`
+}
+
+type CheckoutResponse struct {
+	IDTransaction     int    `json:"id_transaction"`
+	TransactionNumber string `json:"transaction_number"`
+}
