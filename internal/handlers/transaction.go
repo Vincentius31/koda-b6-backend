@@ -17,6 +17,74 @@ func NewTransactionHandler(s *service.TransactionService) *TransactionHandler {
 	return &TransactionHandler{service: s}
 }
 
+func getTransIDFromContext(ctx *gin.Context) (int, bool) {
+	val, exists := ctx.Get("user_id")
+	if !exists {
+		val, exists = ctx.Get("userID")
+	}
+
+	if !exists {
+		return 0, false
+	}
+
+	switch v := val.(type) {
+	case int:
+		return v, true
+	case float64:
+		return int(v), true
+	case string:
+		id, _ := strconv.Atoi(v)
+		return id, true
+	default:
+		return 0, false
+	}
+}
+
+// Checkout godoc
+// @Summary Process checkout
+// @Description Create transaction, add transaction products, and clear cart
+// @Tags checkout
+// @Accept json
+// @Produce json
+// @Param request body models.CheckoutRequest true "Checkout Data"
+// @Success 201 {object} models.WebResponse
+// @Failure 400 {object} models.WebResponse
+// @Router /checkout [post]
+func (h *TransactionHandler) Checkout(ctx *gin.Context) {
+	userID, ok := getTransIDFromContext(ctx)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, models.WebResponse{
+			Success: false,
+			Message: "Unauthorized. Please login.",
+		})
+		return
+	}
+
+	var req models.CheckoutRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{
+			Success: false,
+			Message: "Invalid request: " + err.Error(),
+		})
+		return
+	}
+
+	result, err := h.service.Checkout(ctx.Request.Context(), userID, req)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, models.WebResponse{
+		Success: true,
+		Message: "Checkout successful",
+		Data:    result,
+	})
+}
+
 // Create godoc
 // @Summary Create a new transaction
 // @Tags transactions
@@ -32,7 +100,6 @@ func (h *TransactionHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
-			Data:    nil,
 		})
 		return
 	}
@@ -40,7 +107,6 @@ func (h *TransactionHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
-			Data:    nil,
 		})
 		return
 	}
@@ -63,7 +129,6 @@ func (h *TransactionHandler) GetAll(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
 			Message: "Failed to fetch transactions",
-			Data:    nil,
 		})
 		return
 	}
@@ -88,7 +153,6 @@ func (h *TransactionHandler) GetByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false,
 			Message: "Invalid ID format",
-			Data:    nil,
 		})
 		return
 	}
@@ -98,7 +162,6 @@ func (h *TransactionHandler) GetByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, models.WebResponse{
 			Success: false,
 			Message: "Transaction not found",
-			Data:    nil,
 		})
 		return
 	}
@@ -125,7 +188,6 @@ func (h *TransactionHandler) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
-			Data:    nil,
 		})
 		return
 	}
@@ -133,7 +195,6 @@ func (h *TransactionHandler) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
 			Message: err.Error(),
-			Data:    nil,
 		})
 		return
 	}
@@ -156,7 +217,6 @@ func (h *TransactionHandler) Delete(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{
 			Success: false,
 			Message: "Failed to delete transaction",
-			Data:    nil,
 		})
 		return
 	}
