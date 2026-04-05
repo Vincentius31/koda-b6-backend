@@ -63,3 +63,20 @@ func (r *TransactionRepository) Delete(ctx context.Context, id int) error {
 	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
+
+func (r *TransactionRepository) CreateWithTx(ctx context.Context, tx pgx.Tx, t models.Transaction) (int, string, error) {
+	query := `INSERT INTO "transaction" (user_id, transaction_number, delivery_method, subtotal, total, status, payment_method) 
+	          VALUES ($1, $2, $3, $4, $5, $6, $7) 
+	          RETURNING id_transaction, transaction_number`
+	var id int
+	var transNum string
+	err := tx.QueryRow(ctx, query, t.UserID, t.TransactionNumber, t.DeliveryMethod, t.Subtotal, t.Total, t.Status, t.PaymentMethod).Scan(&id, &transNum)
+	return id, transNum, err
+}
+
+func (r *TransactionRepository) CountByDate(ctx context.Context, date string) (int, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM "transaction" WHERE DATE(created_at) = $1`
+	err := r.db.QueryRow(ctx, query, date).Scan(&count)
+	return count, err
+}
