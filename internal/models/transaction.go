@@ -4,7 +4,7 @@ import "time"
 
 type Transaction struct {
 	IDTransaction     int       `json:"id_transaction"`
-	UserID            *int      `json:"user_id"`
+	UserID           *int      `json:"user_id"`
 	TransactionNumber string    `json:"transaction_number"`
 	DeliveryMethod    string    `json:"delivery_method"`
 	Subtotal          int       `json:"subtotal"`
@@ -12,6 +12,43 @@ type Transaction struct {
 	Status            string    `json:"status"`
 	PaymentMethod     string    `json:"payment_method"`
 	CreatedAt         time.Time `json:"created_at"`
+}
+
+type TransactionListResponse struct {
+	IDTransaction     int       `json:"id_transaction"`
+	TransactionNumber string    `json:"transaction_number"`
+	Total             int       `json:"total"`
+	Status            string    `json:"status"`
+	CreatedAt         time.Time `json:"created_at"`
+	FirstItemImage    string    `json:"first_item_image"`
+}
+
+type TransactionDetailResponse struct {
+	IDTransaction     int                       `json:"id_transaction"`
+	TransactionNumber string                    `json:"transaction_number"`
+	DeliveryMethod    string                    `json:"delivery_method"`
+	Total             int                       `json:"total"`
+	Status            string                    `json:"status"`
+	PaymentMethod     string                    `json:"payment_method"`
+	CreatedAt         time.Time                 `json:"created_at"`
+	Customer          CustomerInfo              `json:"customer"`
+	Items             []TransactionItemResponse `json:"items"`
+}
+
+type CustomerInfo struct {
+	Fullname string  `json:"fullname"`
+	Email    string  `json:"email"`
+	Address  *string `json:"address"`
+}
+
+type TransactionItemResponse struct {
+	ProductID   int    `json:"product_id"`
+	ProductName string `json:"product_name"`
+	Image       string `json:"image"`
+	Quantity    int    `json:"quantity"`
+	Size        string `json:"size"`
+	Variant     string `json:"variant"`
+	Price       int    `json:"price"`
 }
 
 type CreateTransactionRequest struct {

@@ -166,3 +166,11 @@ func (s *TransactionService) Update(ctx context.Context, id int, req models.Upda
 func (s *TransactionService) Delete(ctx context.Context, id int) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func (s *TransactionService) GetByUserID(ctx context.Context, userID int) ([]models.TransactionListResponse, error) {
+	return s.repo.FindByUserID(ctx, userID)
+}
+
+func (s *TransactionService) GetDetailByID(ctx context.Context, transactionID int, userID int) (*models.TransactionDetailResponse, error) {
+	return s.repo.FindDetailByID(ctx, transactionID, userID)
+}

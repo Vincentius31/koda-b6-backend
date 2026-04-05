@@ -71,6 +71,8 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 
 		//Checkout
 		userRoutes.POST("/checkout", transactionHandler.Checkout)
+		userRoutes.GET("/transactions", transactionHandler.GetUserTransactions)
+		userRoutes.GET("/transactions/:id", transactionHandler.GetDetailByID)
 	}
 
 	adminRoutes := r.Group("/admin")

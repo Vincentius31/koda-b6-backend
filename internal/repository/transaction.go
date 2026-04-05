@@ -80,3 +80,84 @@ func (r *TransactionRepository) CountByDate(ctx context.Context, date string) (i
 	err := r.db.QueryRow(ctx, query, date).Scan(&count)
 	return count, err
 }
+
+// FindByUserID returns all transactions for a specific user with first item image
+func (r *TransactionRepository) FindByUserID(ctx context.Context, userID int) ([]models.TransactionListResponse, error) {
+	query := `
+		SELECT 
+			t.id_transaction,
+			t.transaction_number,
+			t.total,
+			t.status,
+			t.created_at,
+			COALESCE((SELECT pi.path FROM transaction_product tp 
+				JOIN product_images pi ON pi.product_id = tp.product_id 
+				WHERE tp.transaction_id = t.id_transaction LIMIT 1), '') as first_item_image
+		FROM "transaction" t
+		WHERE t.user_id = $1
+		ORDER BY t.created_at DESC
+	`
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.TransactionListResponse])
+}
+
+func (r *TransactionRepository) FindDetailByID(ctx context.Context, transactionID int, userID int) (*models.TransactionDetailResponse, error) {
+	query := `
+		SELECT t.id_transaction, t.transaction_number, t.delivery_method, t.total, t.status, t.payment_method, t.created_at, u.fullname, u.email, u.address
+		FROM "transaction" t
+		JOIN users u ON t.user_id = u.id_user
+		WHERE t.id_transaction = $1 AND t.user_id = $2
+	`
+	row := r.db.QueryRow(ctx, query, transactionID, userID)
+
+	var resp models.TransactionDetailResponse
+	var customer models.CustomerInfo
+	err := row.Scan(
+		&resp.IDTransaction,
+		&resp.TransactionNumber,
+		&resp.DeliveryMethod,
+		&resp.Total,
+		&resp.Status,
+		&resp.PaymentMethod,
+		&resp.CreatedAt,
+		&customer.Fullname,
+		&customer.Email,
+		&customer.Address,
+	)
+	if err != nil {
+		return nil, err
+	}
+	resp.Customer = customer
+
+	itemsQuery := `
+		SELECT 
+			tp.product_id,
+			p.name as product_name,
+			COALESCE((SELECT pi.path FROM product_images pi WHERE pi.product_id = tp.product_id LIMIT 1), '') as image,
+			tp.quantity,
+			tp.size,
+			tp.variant,
+			tp.price
+		FROM transaction_product tp
+		JOIN products p ON tp.product_id = p.id_product
+		WHERE tp.transaction_id = $1
+	`
+	rows, err := r.db.Query(ctx, itemsQuery, transactionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.TransactionItemResponse])
+	if err != nil {
+		return nil, err
+	}
+	resp.Items = items
+
+	return &resp, nil
+}
