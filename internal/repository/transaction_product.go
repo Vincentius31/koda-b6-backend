@@ -62,3 +62,10 @@ func (r *TransactionProductRepository) Delete(ctx context.Context, id int) error
 	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
+
+func (r *TransactionProductRepository) CreateWithTx(ctx context.Context, tx pgx.Tx, tp models.TransactionProduct) error {
+	query := `INSERT INTO transaction_product (transaction_id, product_id, quantity, size, variant, price) 
+              VALUES ($1, $2, $3, $4, $5, $6)`
+	_, err := tx.Exec(ctx, query, tp.TransactionID, tp.ProductID, tp.Quantity, tp.Size, tp.Variant, tp.Price)
+	return err
+}
