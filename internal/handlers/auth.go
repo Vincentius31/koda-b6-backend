@@ -40,7 +40,7 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := h.userService.Login(ctx.Request.Context(), req)
+	token, roleID, err := h.userService.Login(ctx.Request.Context(), req)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, models.WebResponse{
 			Success: false,
@@ -53,11 +53,14 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, models.WebResponse{
 		Success: true,
 		Message: "Login successful",
-		Data:    models.LoginResponse{Token: token},
+		Data: models.LoginResponse{
+			Token:  token,
+			RoleID: roleID,
+		},
 	})
 }
 
-// Register godoc 
+// Register godoc
 // @Summary Register new user
 // @Tags auth
 // @Accept json
