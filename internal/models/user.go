@@ -36,5 +36,6 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
+    Token  string `json:"token"`
+    RoleID *int   `json:"role_id"` 
 }
