@@ -37,27 +37,34 @@ func validateUser(fullname string, email string, password string) error {
 	return nil
 }
 
-func (s *UserService) Login(ctx context.Context, req models.LoginRequest) (string, error) {
-	user, err := s.repo.GetByEmail(ctx, req.Email)
+func (s *UserService) Login(ctx context.Context, req models.LoginRequest) (string, *int, error) {
+    user, err := s.repo.GetByEmail(ctx, req.Email)
 
-	if err != nil {
-		return "", errors.New("Invalid email or wrong password")
-	}
+    if err != nil {
+        return "", nil, errors.New("Invalid email or wrong password")
+    }
 
-	ok, err := argon2.VerifyEncoded([]byte(req.Password), []byte(user.Password))
-	if err != nil || !ok {
-		return "", errors.New("Wrong email or password")
-	}
+    ok, err := argon2.VerifyEncoded([]byte(req.Password), []byte(user.Password))
+    if err != nil || !ok {
+        return "", nil, errors.New("Wrong email or password")
+    }
 
-	claims := jwt.MapClaims{
-		"user_id": user.IDUser,
-		"email":   user.Email,
-		"exp":     time.Now().Add(time.Minute * 15).Unix(),
-	}
+    claims := jwt.MapClaims{
+        "user_id": user.IDUser,
+        "email":   user.Email,
+        "role_id": user.RolesID, 
+        "exp":     time.Now().Add(time.Minute * 15).Unix(),
+    }
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	secret := os.Getenv("APP_SECRET")
-	return token.SignedString([]byte(secret))
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    secret := os.Getenv("APP_SECRET")
+    
+    signedToken, err := token.SignedString([]byte(secret))
+    if err != nil {
+        return "", nil, err
+    }
+
+    return signedToken, user.RolesID, nil
 }
 
 func (s *UserService) UpdateProfileImage(ctx context.Context, id int, filename string) error {
