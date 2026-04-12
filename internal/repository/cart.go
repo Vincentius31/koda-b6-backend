@@ -103,3 +103,15 @@ func (r *CartRepository) Delete(ctx context.Context, id int) error {
 	_, err := r.db.Exec(ctx, query, id)
 	return err
 }
+
+func (r *CartRepository) DeleteByUserID(ctx context.Context, userID int) error {
+	query := `DELETE FROM cart WHERE user_id = $1`
+	_, err := r.db.Exec(ctx, query, userID)
+	return err
+}
+
+func (r *CartRepository) DeleteByUserIDWithTx(ctx context.Context, tx pgx.Tx, userID int) error {
+	query := `DELETE FROM cart WHERE user_id = $1`
+	_, err := tx.Exec(ctx, query, userID)
+	return err
+}

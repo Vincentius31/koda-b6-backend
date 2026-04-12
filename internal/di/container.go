@@ -1,10 +1,10 @@
 package di
 
 import (
+	"github.com/jackc/pgx/v5/pgxpool"
 	"koda-b6-backend/internal/handlers"
 	"koda-b6-backend/internal/repository"
 	"koda-b6-backend/internal/service"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Container struct {
@@ -91,6 +91,11 @@ type Container struct {
 	//Prdouct_detail
 	productDetailService *service.DetailProductService
 	productDetailHandler *handlers.DetailProductHandler
+
+	//dashboard_admin
+	dashboardRepo    *repository.DashboardRepository
+	dashboardService *service.DashboardService
+	dashboardHandler *handlers.DashboardHandler
 }
 
 func NewContainer(pool *pgxpool.Pool) *Container {
@@ -105,7 +110,7 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 
 func (c *Container) initDependencies() {
 	// Ganti semua c.db menjadi c.pool
-	
+
 	//Users
 	c.userRepo = repository.NewUserRepository(c.pool)
 	c.userService = service.NewUserService(c.userRepo)
@@ -158,7 +163,7 @@ func (c *Container) initDependencies() {
 
 	//transaction
 	c.transactionRepo = repository.NewTransactionRepository(c.pool)
-	c.transactionService = service.NewTransactionService(c.transactionRepo)
+	c.transactionService = service.NewTransactionService(c.pool, c.transactionRepo, c.cartRepo)
 	c.transactionHandler = handlers.NewTransactionHandler(c.transactionService)
 
 	//transaction_product
@@ -187,6 +192,11 @@ func (c *Container) initDependencies() {
 	//Product_detail
 	c.productDetailService = service.NewDetailProductService(c.productRepo)
 	c.productDetailHandler = handlers.NewDetailProductHandler(c.productDetailService)
+
+	//dashboard_admin
+	c.dashboardRepo = repository.NewDashboardRepository(c.pool)
+	c.dashboardService = service.NewDashboardService(c.dashboardRepo)
+	c.dashboardHandler = handlers.NewDashboardHandler(c.dashboardService)
 }
 
 func (c *Container) UserHandler() *handlers.UserHandler {
@@ -255,4 +265,8 @@ func (c *Container) ProductPageHandler() *handlers.ProductPageHandler {
 
 func (c *Container) ProductDetailHandler() *handlers.DetailProductHandler {
 	return c.productDetailHandler
+}
+
+func (c *Container) DashboardHandler() *handlers.DashboardHandler {
+	return c.dashboardHandler
 }

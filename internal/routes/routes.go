@@ -28,6 +28,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 	landingHandler := container.LandingHandler()
 	productPageHandler := container.ProductPageHandler()
 	productDetailHandler := container.ProductDetailHandler()
+	dashboardHandler := container.DashboardHandler()
 
 	authRoutes := r.Group("/auth")
 	{
@@ -68,12 +69,26 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 		userRoutes.POST("/cart", cartHandler.Create)
 		userRoutes.PATCH("/cart/:id", cartHandler.Update)
 		userRoutes.DELETE("/cart/:id", cartHandler.Delete)
+
+		// Checkout
+		userRoutes.POST("/checkout", transactionHandler.Checkout)
+
+		// Transactions (History Order)
+		userRoutes.GET("/transactions", transactionHandler.GetUserTransactions)
+		userRoutes.GET("/transactions/:id", transactionHandler.GetDetailByID)
 	}
 
 	adminRoutes := r.Group("/admin")
+	adminRoutes.Use(middleware.AuthMiddleware())
 	{
+		dashboardRoutes := adminRoutes.Group("/dashboard")
+		{
+			dashboardRoutes.GET("/sales-category", dashboardHandler.GetSalesCategory)
+			dashboardRoutes.GET("/best-sellers", dashboardHandler.GetBestSellers)
+			dashboardRoutes.GET("/order-stats", dashboardHandler.GetOrderStats)
+		}
+		
 		userRoutes := adminRoutes.Group("/users")
-		userRoutes.Use(middleware.AuthMiddleware())
 		{
 			userRoutes.GET("", userHandler.GetAll)
 			userRoutes.GET("/:id", userHandler.GetByID)
