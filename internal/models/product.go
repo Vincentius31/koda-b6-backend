@@ -1,30 +1,5 @@
 package models
 
-type Product struct {
-	IDProduct int    `json:"id_product"`
-	Name      string `json:"name"`
-	Desc      string `json:"desc"`
-	Price     int    `json:"price"`
-	Quantity  int    `json:"quantity"`
-	IsActive  bool   `json:"is_active"`
-}
-
-type CreateProductRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Desc     string `json:"desc"`
-	Price    int    `json:"price" binding:"required,min=1"`
-	Quantity int    `json:"quantity" binding:"min=0"`
-	IsActive bool   `json:"is_active"`
-}
-
-type UpdateProductRequest struct {
-	Name     *string `json:"name"`
-	Desc     *string `json:"desc"`
-	Price    *int    `json:"price"`
-	Quantity *int    `json:"quantity"`
-	IsActive *bool   `json:"is_active"`
-}
-
 type ProductLanding struct {
     IDProduct   int    `db:"id_product" json:"id_product"`
     Name        string `db:"name" json:"name"`
@@ -54,4 +29,19 @@ type PagingMeta struct {
 type ProductCatalogResponse struct {
 	Items []ProductCatalog `json:"items"`
 	Meta  PagingMeta       `json:"meta"`
+}
+
+type AdminProductPayload struct {
+	ID            int      `json:"id"` // React menggunakan "id", bukan "id_product"
+	NameProduct   string   `json:"nameProduct" binding:"required"`
+	PriceProduct  int      `json:"priceProduct" binding:"required"`
+	PriceDiscount int      `json:"priceDiscount"`
+	Description   string   `json:"description"`
+	Stock         int      `json:"stock"`
+	Size          []string `json:"size"`
+	Temp          []string `json:"temp"`
+	Method        []string `json:"method"`
+	ImageProduct  []string `json:"imageProduct"`
+	Category      string   `json:"category"`
+	PromoType     string   `json:"promoType"`
 }
