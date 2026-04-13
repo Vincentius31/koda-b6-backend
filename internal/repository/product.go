@@ -19,42 +19,187 @@ func NewProductRepository(db *pgxpool.Pool) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (r *ProductRepository) Create(ctx context.Context, p models.Product) error {
-	query := `INSERT INTO products (name, "desc", price, quantity, is_active) VALUES ($1, $2, $3, $4, $5)`
-	_, err := r.db.Exec(ctx, query, p.Name, p.Desc, p.Price, p.Quantity, p.IsActive)
-	return err
+func (r *ProductRepository) Create(ctx context.Context, req models.AdminProductPayload) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	var productID int
+	queryProd := `INSERT INTO products (name, "desc", price, quantity, is_active) VALUES ($1, $2, $3, $4, true) RETURNING id_product`
+	err = tx.QueryRow(ctx, queryProd, req.NameProduct, req.Description, req.PriceProduct, req.Stock).Scan(&productID)
+	if err != nil {
+		return err
+	}
+
+	for _, img := range req.ImageProduct {
+		_, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, productID, img)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, s := range req.Size {
+		addPrice := 0
+		if s == "Large" || s == "500 gr" {
+			addPrice = 5000
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO product_size (product_id, size_name, additional_price) VALUES ($1, $2, $3)`, productID, s, addPrice)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, t := range req.Temp {
+		_, err = tx.Exec(ctx, `INSERT INTO product_variant (product_id, variant_name, additional_price) VALUES ($1, $2, 0)`, productID, t)
+		if err != nil {
+			return err
+		}
+	}
+
+	if req.Category != "" {
+		var catID int
+		errCat := tx.QueryRow(ctx, `SELECT id_category FROM category WHERE name_category ILIKE $1 LIMIT 1`, req.Category).Scan(&catID)
+		if errCat == nil {
+			_, err = tx.Exec(ctx, `INSERT INTO products_category (product_id, category_id) VALUES ($1, $2)`, productID, catID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if req.PromoType != "" || req.PriceDiscount > 0 {
+		rate := 0.0
+		if req.PriceProduct > 0 && req.PriceDiscount > 0 {
+			rate = float64(req.PriceProduct-req.PriceDiscount) / float64(req.PriceProduct)
+		}
+		isFlashSale := (req.PromoType == "Flash Sale" || req.PromoType == "FLASH SALE!")
+		_, err = tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description, is_flash_sale) VALUES ($1, $2, $3, $4)`, productID, rate, req.PromoType, isFlashSale)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
-func (r *ProductRepository) FindAll(ctx context.Context) ([]models.Product, error) {
-	query := `SELECT id_product, name, "desc", price, quantity, is_active FROM products`
+func (r *ProductRepository) FindAll(ctx context.Context) ([]models.AdminProductPayload, error) {
+	query := `
+		SELECT 
+			p.id_product, p.name, p.desc, p.price, p.quantity,
+			COALESCE(c.name_category, 'Coffee') as category,
+			COALESCE(d.description, '') as promo_type,
+			COALESCE(CAST(p.price - (p.price * d.discount_rate) AS INT), 0) as price_discount,
+			COALESCE((SELECT array_agg(path) FROM product_images WHERE product_id = p.id_product), ARRAY[]::VARCHAR[]) as images,
+			COALESCE((SELECT array_agg(size_name) FROM product_size WHERE product_id = p.id_product), ARRAY[]::VARCHAR[]) as sizes,
+			COALESCE((SELECT array_agg(variant_name) FROM product_variant WHERE product_id = p.id_product), ARRAY[]::VARCHAR[]) as temps
+		FROM products p
+		LEFT JOIN products_category pc ON p.id_product = pc.product_id
+		LEFT JOIN category c ON pc.category_id = c.id_category
+		LEFT JOIN discount d ON p.id_product = d.product_id
+		ORDER BY p.id_product DESC
+	`
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	return pgx.CollectRows(rows, pgx.RowToStructByName[models.Product])
+	var results []models.AdminProductPayload
+	for rows.Next() {
+		var res models.AdminProductPayload
+		err := rows.Scan(
+			&res.ID, &res.NameProduct, &res.Description, &res.PriceProduct, &res.Stock,
+			&res.Category, &res.PromoType, &res.PriceDiscount,
+			&res.ImageProduct, &res.Size, &res.Temp,
+		)
+		if err != nil {
+			continue
+		}
+		res.Method = []string{"Dine In", "Pick Up", "Door Delivery"}
+		results = append(results, res)
+	}
+	return results, nil
 }
 
-func (r *ProductRepository) FindByID(ctx context.Context, id int) (*models.Product, error) {
-	query := `SELECT id_product, name, "desc", price, quantity, is_active FROM products WHERE id_product = $1`
-	rows, err := r.db.Query(ctx, query, id)
+func (r *ProductRepository) FindByID(ctx context.Context, id int) (*models.AdminProductPayload, error) {
+	query := `
+		SELECT 
+			p.id_product, p.name, p.desc, p.price, p.quantity,
+			COALESCE(c.name_category, 'Coffee') as category,
+			COALESCE(d.description, '') as promo_type,
+			COALESCE(CAST(p.price - (p.price * d.discount_rate) AS INT), 0) as price_discount,
+			COALESCE((SELECT array_agg(path) FROM product_images WHERE product_id = p.id_product), ARRAY[]::VARCHAR[]) as images,
+			COALESCE((SELECT array_agg(size_name) FROM product_size WHERE product_id = p.id_product), ARRAY[]::VARCHAR[]) as sizes,
+			COALESCE((SELECT array_agg(variant_name) FROM product_variant WHERE product_id = p.id_product), ARRAY[]::VARCHAR[]) as temps
+		FROM products p
+		LEFT JOIN products_category pc ON p.id_product = pc.product_id
+		LEFT JOIN category c ON pc.category_id = c.id_category
+		LEFT JOIN discount d ON p.id_product = d.product_id
+		WHERE p.id_product = $1
+	`
+	var res models.AdminProductPayload
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&res.ID, &res.NameProduct, &res.Description, &res.PriceProduct, &res.Stock,
+		&res.Category, &res.PromoType, &res.PriceDiscount,
+		&res.ImageProduct, &res.Size, &res.Temp,
+	)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	p, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Product])
-	if err != nil {
-		return nil, err
-	}
-	return &p, nil
+	res.Method = []string{"Dine In", "Pick Up", "Door Delivery"}
+	return &res, nil
 }
 
-func (r *ProductRepository) Update(ctx context.Context, id int, p models.Product) error {
-	query := `UPDATE products SET name=$1, "desc"=$2, price=$3, quantity=$4, is_active=$5 WHERE id_product=$6`
-	_, err := r.db.Exec(ctx, query, p.Name, p.Desc, p.Price, p.Quantity, p.IsActive, id)
-	return err
+func (r *ProductRepository) Update(ctx context.Context, id int, req models.AdminProductPayload) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	queryProd := `UPDATE products SET name=$1, "desc"=$2, price=$3, quantity=$4 WHERE id_product=$5`
+	_, err = tx.Exec(ctx, queryProd, req.NameProduct, req.Description, req.PriceProduct, req.Stock, id)
+	if err != nil {
+		return err
+	}
+
+	tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id)
+	tx.Exec(ctx, `DELETE FROM product_size WHERE product_id=$1`, id)
+	tx.Exec(ctx, `DELETE FROM product_variant WHERE product_id=$1`, id)
+	tx.Exec(ctx, `DELETE FROM discount WHERE product_id=$1`, id)
+	tx.Exec(ctx, `DELETE FROM products_category WHERE product_id=$1`, id)
+
+	for _, img := range req.ImageProduct {
+		tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img)
+	}
+	for _, s := range req.Size {
+		addPrice := 0
+		if s == "Large" || s == "500 gr" {
+			addPrice = 5000
+		}
+		tx.Exec(ctx, `INSERT INTO product_size (product_id, size_name, additional_price) VALUES ($1, $2, $3)`, id, s, addPrice)
+	}
+	for _, t := range req.Temp {
+		tx.Exec(ctx, `INSERT INTO product_variant (product_id, variant_name, additional_price) VALUES ($1, $2, 0)`, id, t)
+	}
+	if req.Category != "" {
+		var catID int
+		errCat := tx.QueryRow(ctx, `SELECT id_category FROM category WHERE name_category ILIKE $1 LIMIT 1`, req.Category).Scan(&catID)
+		if errCat == nil {
+			tx.Exec(ctx, `INSERT INTO products_category (product_id, category_id) VALUES ($1, $2)`, id, catID)
+		}
+	}
+	if req.PromoType != "" || req.PriceDiscount > 0 {
+		rate := 0.0
+		if req.PriceProduct > 0 && req.PriceDiscount > 0 {
+			rate = float64(req.PriceProduct-req.PriceDiscount) / float64(req.PriceProduct)
+		}
+		tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description) VALUES ($1, $2, $3)`, id, rate, req.PromoType)
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *ProductRepository) Delete(ctx context.Context, id int) error {
