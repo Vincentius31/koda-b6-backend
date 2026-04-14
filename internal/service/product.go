@@ -15,6 +15,10 @@ func NewProductService(repo *repository.ProductRepository) *ProductService {
 	return &ProductService{repo: repo}
 }
 
+func (s *ProductService) GetPromos(ctx context.Context) ([]string, error) {
+	return s.repo.GetAvailablePromos(ctx)
+}
+
 func (s *ProductService) Create(ctx context.Context, req models.AdminProductPayload) error {
 	if req.PriceProduct <= 0 {
 		return errors.New("price must be greater than zero")
