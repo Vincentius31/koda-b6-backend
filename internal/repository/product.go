@@ -182,18 +182,32 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 		return err
 	}
 
-	tx.Exec(ctx, `DELETE FROM product_size WHERE product_id=$1`, id)
-	tx.Exec(ctx, `DELETE FROM product_variant WHERE product_id=$1`, id)
-	tx.Exec(ctx, `DELETE FROM discount WHERE product_id=$1`, id)
-	tx.Exec(ctx, `DELETE FROM products_category WHERE product_id=$1`, id)
+	if _, err = tx.Exec(ctx, `DELETE FROM product_size WHERE product_id=$1`, id); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `DELETE FROM product_variant WHERE product_id=$1`, id); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `DELETE FROM discount WHERE product_id=$1`, id); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `DELETE FROM products_category WHERE product_id=$1`, id); err != nil {
+		return err
+	}
 
-	if len(req.ImageProduct) > 0 {
-		tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id)
-		for _, img := range req.ExistingImages {
-			tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img)
+	if _, err = tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id); err != nil {
+		return err
+	}
+
+	for _, img := range req.ExistingImages {
+		if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img); err != nil {
+			return err
 		}
-		for _, img := range req.ImageProduct {
-			tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img)
+	}
+
+	for _, img := range req.ImageProduct {
+		if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img); err != nil {
+			return err
 		}
 	}
 
@@ -202,16 +216,22 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 		if s == "Large" || s == "500 gr" {
 			addPrice = 5000
 		}
-		tx.Exec(ctx, `INSERT INTO product_size (product_id, size_name, additional_price) VALUES ($1, $2, $3)`, id, s, addPrice)
+		if _, err = tx.Exec(ctx, `INSERT INTO product_size (product_id, size_name, additional_price) VALUES ($1, $2, $3)`, id, s, addPrice); err != nil {
+			return err
+		}
 	}
 	for _, t := range req.Temp {
-		tx.Exec(ctx, `INSERT INTO product_variant (product_id, variant_name, additional_price) VALUES ($1, $2, 0)`, id, t)
+		if _, err = tx.Exec(ctx, `INSERT INTO product_variant (product_id, variant_name, additional_price) VALUES ($1, $2, 0)`, id, t); err != nil {
+			return err
+		}
 	}
 	if req.Category != "" {
 		var catID int
 		errCat := tx.QueryRow(ctx, `SELECT id_category FROM category WHERE name_category ILIKE $1 LIMIT 1`, req.Category).Scan(&catID)
 		if errCat == nil {
-			tx.Exec(ctx, `INSERT INTO products_category (product_id, category_id) VALUES ($1, $2)`, id, catID)
+			if _, err = tx.Exec(ctx, `INSERT INTO products_category (product_id, category_id) VALUES ($1, $2)`, id, catID); err != nil {
+				return err
+			}
 		}
 	}
 	if req.PromoType != "" || req.PriceDiscount > 0 {
@@ -219,7 +239,9 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 		if req.PriceProduct > 0 && req.PriceDiscount > 0 {
 			rate = float64(req.PriceProduct-req.PriceDiscount) / float64(req.PriceProduct)
 		}
-		tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description) VALUES ($1, $2, $3)`, id, rate, req.PromoType)
+		if _, err = tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description) VALUES ($1, $2, $3)`, id, rate, req.PromoType); err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit(ctx)
