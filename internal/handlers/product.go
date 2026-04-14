@@ -165,6 +165,8 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 		payload.ImageProduct = imagePaths
 	}
 
+	payload.ExistingImages = ctx.PostFormArray("existingImages")
+
 	if err := h.service.Update(ctx.Request.Context(), id, payload); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: err.Error()})
 		return
