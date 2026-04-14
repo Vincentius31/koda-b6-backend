@@ -189,6 +189,9 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 
 	if len(req.ImageProduct) > 0 {
 		tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id)
+		for _, img := range req.ExistingImages {
+			tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img)
+		}
 		for _, img := range req.ImageProduct {
 			tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img)
 		}
