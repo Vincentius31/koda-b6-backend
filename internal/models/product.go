@@ -32,18 +32,18 @@ type ProductCatalogResponse struct {
 }
 
 type AdminProductPayload struct {
-	ID            int      `json:"id"`
-	NameProduct   string   `json:"nameProduct"`
-	Description   string   `json:"description"`
-	PriceProduct  int      `json:"priceProduct"`
-	Stock         int      `json:"stock"`
-	IsActive      bool     `json:"isActive"`
-	Category      string   `json:"category"`
-	PromoType     string   `json:"promoType"`
-	PriceDiscount int      `json:"priceDiscount"`
-	ImageProduct  []string `json:"imageProduct"`
-	Size          []string `json:"size"`
-	Temp          []string `json:"temp"`
-	Method        []string `json:"method"`
+	ID             int      `json:"id"`
+	NameProduct    string   `json:"nameProduct"`
+	Description    string   `json:"description"`
+	PriceProduct   int      `json:"priceProduct"`
+	Stock          int      `json:"stock"`
+	IsActive       bool     `json:"isActive"`
+	Category       string   `json:"category"`
+	PromoType      string   `json:"promoType"`
+	PriceDiscount  int      `json:"priceDiscount"`
+	ImageProduct   []string `json:"imageProduct"`
 	ExistingImages []string `json:"existingImages"`
+	Size           []string `json:"size"`
+	Temp           []string `json:"temp"`
+	Method         []string `json:"method"`
 }
