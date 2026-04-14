@@ -132,6 +132,9 @@ func (h *ProductHandler) UploadImages(ctx *gin.Context) {
 		return
 	}
 
+	ctx.Header("Cache-Control", "no-store, no-cache, must-revalidate")
+	ctx.Header("Pragma", "no-cache")
+	ctx.Header("Expires", "0")
 	ctx.JSON(http.StatusOK, models.WebResponse{Success: true, Message: "Images uploaded successfully", Data: savedPaths})
 }
 
