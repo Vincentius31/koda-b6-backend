@@ -45,4 +45,5 @@ type AdminProductPayload struct {
 	Size          []string `json:"size"`
 	Temp          []string `json:"temp"`
 	Method        []string `json:"method"`
+	ExistingImages []string `json:"existingImages"`
 }
