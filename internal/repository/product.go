@@ -19,6 +19,24 @@ func NewProductRepository(db *pgxpool.Pool) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
+func (r *ProductRepository) GetAvailablePromos(ctx context.Context) ([]string, error) {
+	query := `SELECT DISTINCT description FROM discount WHERE description IS NOT NULL AND description != ''`
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var promos []string
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err == nil {
+			promos = append(promos, p)
+		}
+	}
+	return promos, nil
+}
+
 func (r *ProductRepository) Create(ctx context.Context, req models.AdminProductPayload) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -69,15 +87,14 @@ func (r *ProductRepository) Create(ctx context.Context, req models.AdminProductP
 		}
 	}
 
-	if req.PromoType != "" || req.PriceDiscount > 0 {
-		rate := 0.0
-		if req.PriceProduct > 0 && req.PriceDiscount > 0 {
-			rate = float64(req.PriceProduct-req.PriceDiscount) / float64(req.PriceProduct)
-		}
-		isFlashSale := (req.PromoType == "Flash Sale" || req.PromoType == "FLASH SALE!")
-		_, err = tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description, is_flash_sale) VALUES ($1, $2, $3, $4)`, productID, rate, req.PromoType, isFlashSale)
-		if err != nil {
-			return err
+	if req.PromoType != "" {
+		var rate float64
+
+		errRate := tx.QueryRow(ctx, `SELECT discount_rate FROM discount WHERE description = $1 LIMIT 1`, req.PromoType).Scan(&rate)
+
+		if errRate == nil {
+			isFlashSale := (req.PromoType == "Flash Sale" || req.PromoType == "FLASH SALE!")
+			tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description, is_flash_sale) VALUES ($1, $2, $3, $4)`, productID, rate, req.PromoType, isFlashSale)
 		}
 	}
 
