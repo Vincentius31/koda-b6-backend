@@ -195,19 +195,25 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 		return err
 	}
 
-	if _, err = tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id); err != nil {
-		return err
-	}
+	hasNewImages := len(req.ImageProduct) > 0
+	hasExistingImages := len(req.ExistingImages) > 0
 
-	for _, img := range req.ExistingImages {
-		if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img); err != nil {
+	if hasNewImages || hasExistingImages {
+		if _, err = tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id); err != nil {
 			return err
 		}
-	}
-
-	for _, img := range req.ImageProduct {
-		if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img); err != nil {
-			return err
+		if hasNewImages {
+			for _, img := range req.ImageProduct {
+				if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img); err != nil {
+					return err
+				}
+			}
+		} else {
+			for _, img := range req.ExistingImages {
+				if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
