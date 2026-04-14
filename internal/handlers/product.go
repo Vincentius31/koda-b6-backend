@@ -87,7 +87,11 @@ func (h *ProductHandler) handleFileUpload(ctx *gin.Context) ([]string, error) {
 			return nil, err
 		}
 
-		savedPaths = append(savedPaths, "http://localhost:8080/"+filePath)
+		baseURL := os.Getenv("BASE_URL")
+		if baseURL == "" {
+			baseURL = "http://localhost:8888"
+		}
+		savedPaths = append(savedPaths, baseURL+"/"+filePath)
 	}
 
 	return savedPaths, nil
