@@ -45,3 +45,11 @@ func (s *ProductService) Update(ctx context.Context, id int, req models.AdminPro
 func (s *ProductService) Delete(ctx context.Context, id int) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func (s *ProductService) UpdateImages(ctx context.Context, id int, paths []string) error {
+	_, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return errors.New("product not found")
+	}
+	return s.repo.UpdateImages(ctx, id, paths)
+}

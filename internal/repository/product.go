@@ -176,8 +176,8 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 	}
 	defer tx.Rollback(ctx)
 
-	queryProd := `UPDATE products SET name=$1, "desc"=$2, price=$3, quantity=$4 WHERE id_product=$5`
-	_, err = tx.Exec(ctx, queryProd, req.NameProduct, req.Description, req.PriceProduct, req.Stock, id)
+	_, err = tx.Exec(ctx, `UPDATE products SET name=$1, "desc"=$2, price=$3, quantity=$4 WHERE id_product=$5`,
+		req.NameProduct, req.Description, req.PriceProduct, req.Stock, id)
 	if err != nil {
 		return err
 	}
@@ -193,28 +193,6 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 	}
 	if _, err = tx.Exec(ctx, `DELETE FROM products_category WHERE product_id=$1`, id); err != nil {
 		return err
-	}
-
-	hasNewImages := len(req.ImageProduct) > 0
-	hasExistingImages := len(req.ExistingImages) > 0
-
-	if hasNewImages || hasExistingImages {
-		if _, err = tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id); err != nil {
-			return err
-		}
-		if hasNewImages {
-			for _, img := range req.ImageProduct {
-				if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img); err != nil {
-					return err
-				}
-			}
-		} else {
-			for _, img := range req.ExistingImages {
-				if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img); err != nil {
-					return err
-				}
-			}
-		}
 	}
 
 	for _, s := range req.Size {
@@ -240,12 +218,32 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 			}
 		}
 	}
-	if req.PromoType != "" || req.PriceDiscount > 0 {
-		rate := 0.0
-		if req.PriceProduct > 0 && req.PriceDiscount > 0 {
-			rate = float64(req.PriceProduct-req.PriceDiscount) / float64(req.PriceProduct)
+	if req.PromoType != "" {
+		var rate float64
+		errRate := tx.QueryRow(ctx, `SELECT discount_rate FROM discount WHERE description = $1 LIMIT 1`, req.PromoType).Scan(&rate)
+		if errRate == nil {
+			isFlashSale := (req.PromoType == "Flash Sale" || req.PromoType == "FLASH SALE!")
+			if _, err = tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description, is_flash_sale) VALUES ($1, $2, $3, $4)`, id, rate, req.PromoType, isFlashSale); err != nil {
+				return err
+			}
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description) VALUES ($1, $2, $3)`, id, rate, req.PromoType); err != nil {
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *ProductRepository) UpdateImages(ctx context.Context, id int, paths []string) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err = tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id); err != nil {
+		return err
+	}
+	for _, path := range paths {
+		if _, err = tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, path); err != nil {
 			return err
 		}
 	}

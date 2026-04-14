@@ -38,7 +38,6 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 		authRoutes.PATCH("/forgot-password", authHandler.ResetPassword)
 	}
 
-	
 	landingRoutes := r.Group("/landing")
 	{
 		landingRoutes.GET("/recommended-products", landingHandler.GetRecommendedProducts)
@@ -87,7 +86,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			dashboardRoutes.GET("/best-sellers", dashboardHandler.GetBestSellers)
 			dashboardRoutes.GET("/order-stats", dashboardHandler.GetOrderStats)
 		}
-		
+
 		userRoutes := adminRoutes.Group("/users")
 		{
 			userRoutes.GET("", userHandler.GetAll)
@@ -96,7 +95,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			userRoutes.PATCH("/:id", userHandler.Update)
 			userRoutes.DELETE("/:id", userHandler.Delete)
 		}
-	
+
 		roleRoutes := adminRoutes.Group("/roles")
 		{
 			roleRoutes.GET("", roleHandler.GetAll)
@@ -105,7 +104,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			roleRoutes.PATCH("/:id", roleHandler.Update)
 			roleRoutes.DELETE("/:id", roleHandler.Delete)
 		}
-	
+
 		categoryRoutes := adminRoutes.Group("/categories")
 		{
 			categoryRoutes.GET("", categoryHandler.GetAll)
@@ -122,9 +121,10 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			productRoutes.GET("/:id", productHandler.GetByID)
 			productRoutes.POST("", productHandler.Create)
 			productRoutes.PATCH("/:id", productHandler.Update)
+			productRoutes.PATCH("/:id/images", productHandler.UploadImages)
 			productRoutes.DELETE("/:id", productHandler.Delete)
 		}
-	
+
 		productCategoryRoutes := adminRoutes.Group("/productcategory")
 		{
 			productCategoryRoutes.GET("", productCategoryHandler.GetAll)
@@ -133,7 +133,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			productCategoryRoutes.PATCH("/:id", productCategoryHandler.Update)
 			productCategoryRoutes.DELETE("/:id", productCategoryHandler.Delete)
 		}
-	
+
 		productImageRoutes := adminRoutes.Group("/productimage")
 		{
 			productImageRoutes.GET("", productImageHandler.GetAll)
@@ -142,7 +142,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			productImageRoutes.PATCH("/:id", productImageHandler.Update)
 			productImageRoutes.DELETE("/:id", productImageHandler.Delete)
 		}
-	
+
 		productVariantRoutes := adminRoutes.Group("/productvariant")
 		{
 			productVariantRoutes.GET("", productVariantHandler.GetAll)
@@ -151,7 +151,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			productVariantRoutes.PATCH("/:id", productVariantHandler.Update)
 			productVariantRoutes.DELETE("/:id", productVariantHandler.Delete)
 		}
-	
+
 		productSizeRoutes := adminRoutes.Group("/productsize")
 		{
 			productSizeRoutes.GET("", productSizeHandler.GetAll)
@@ -160,7 +160,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			productSizeRoutes.PATCH("/:id", productSizeHandler.Update)
 			productSizeRoutes.DELETE("/:id", productSizeHandler.Delete)
 		}
-	
+
 		discountRoutes := adminRoutes.Group("/discount")
 		{
 			discountRoutes.GET("", discountHandler.GetAll)
@@ -169,7 +169,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			discountRoutes.PATCH("/:id", discountHandler.Update)
 			discountRoutes.DELETE("/:id", discountHandler.Delete)
 		}
-	
+
 		transactionRoutes := adminRoutes.Group("/transaction")
 		{
 			transactionRoutes.GET("", transactionHandler.GetAll)
@@ -178,7 +178,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			transactionRoutes.PATCH("/:id", transactionHandler.Update)
 			transactionRoutes.DELETE("/:id", transactionHandler.Delete)
 		}
-	
+
 		transactionProductRoutes := adminRoutes.Group("/transactionproduct")
 		{
 			transactionProductRoutes.GET("", transactionProductHandler.GetAll)
@@ -187,7 +187,7 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			transactionProductRoutes.PATCH("/:id", transactionProductHandler.Update)
 			transactionProductRoutes.DELETE("/:id", transactionProductHandler.Delete)
 		}
-	
+
 		reviewRoutes := adminRoutes.Group("/review")
 		{
 			reviewRoutes.GET("", reviewHandler.GetAll)

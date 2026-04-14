@@ -31,85 +31,12 @@ func (h *ProductHandler) GetPromos(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, models.WebResponse{Success: true, Message: "Promos retrieved", Data: promos})
 }
 
-func (h *ProductHandler) parseProductForm(ctx *gin.Context) (models.AdminProductPayload, error) {
-	var payload models.AdminProductPayload
-
-	ctx.MultipartForm()
-
-	payload.NameProduct = ctx.PostForm("nameProduct")
-	payload.Description = ctx.PostForm("description")
-	payload.Category = ctx.PostForm("category")
-	payload.PromoType = ctx.PostForm("promoType")
-
-	payload.PriceProduct, _ = strconv.Atoi(ctx.PostForm("priceProduct"))
-	payload.PriceDiscount, _ = strconv.Atoi(ctx.PostForm("priceDiscount"))
-	payload.Stock, _ = strconv.Atoi(ctx.PostForm("stock"))
-
-	payload.Size = ctx.PostFormArray("size")
-	if len(payload.Size) == 0 && ctx.PostForm("size") != "" {
-		payload.Size = strings.Split(ctx.PostForm("size"), ",")
-	}
-
-	payload.Temp = ctx.PostFormArray("temp")
-	if len(payload.Temp) == 0 && ctx.PostForm("temp") != "" {
-		payload.Temp = strings.Split(ctx.PostForm("temp"), ",")
-	}
-
-	payload.Method = ctx.PostFormArray("method")
-	if len(payload.Method) == 0 && ctx.PostForm("method") != "" {
-		payload.Method = strings.Split(ctx.PostForm("method"), ",")
-	}
-
-	return payload, nil
-}
-
-func (h *ProductHandler) handleFileUpload(ctx *gin.Context) ([]string, error) {
-	var savedPaths []string
-
-	form, err := ctx.MultipartForm()
-	if err != nil {
-		return savedPaths, nil
-	}
-
-	files := form.File["images"]
-	if len(files) == 0 {
-		return savedPaths, nil
-	}
-
-	os.MkdirAll("uploads", os.ModePerm)
-
-	for _, file := range files {
-		extension := filepath.Ext(file.Filename)
-		newFileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), extension)
-		filePath := filepath.Join("uploads", newFileName)
-
-		if err := ctx.SaveUploadedFile(file, filePath); err != nil {
-			return nil, err
-		}
-
-		baseURL := os.Getenv("BASE_URL")
-		if baseURL == "" {
-			baseURL = "http://localhost:8888"
-		}
-		savedPaths = append(savedPaths, baseURL+"/"+filePath)
-	}
-
-	return savedPaths, nil
-}
-
 func (h *ProductHandler) Create(ctx *gin.Context) {
-	payload, err := h.parseProductForm(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Invalid form data"})
+	var payload models.AdminProductPayload
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Invalid JSON data"})
 		return
 	}
-
-	imagePaths, err := h.handleFileUpload(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: "Failed to save images"})
-		return
-	}
-	payload.ImageProduct = imagePaths
 
 	if err := h.service.Create(ctx.Request.Context(), payload); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: err.Error()})
@@ -149,27 +76,11 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	if err := ctx.Request.ParseMultipartForm(32 << 20); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Failed to parse form data"})
+	var payload models.AdminProductPayload
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Invalid JSON data"})
 		return
 	}
-
-	payload, err := h.parseProductForm(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Invalid form data"})
-		return
-	}
-
-	imagePaths, err := h.handleFileUpload(ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: "Failed to upload new images"})
-		return
-	}
-	if len(imagePaths) > 0 {
-		payload.ImageProduct = imagePaths
-	}
-
-	payload.ExistingImages = ctx.PostFormArray("existingImages")
 
 	if err := h.service.Update(ctx.Request.Context(), id, payload); err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: err.Error()})
@@ -177,6 +88,51 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, models.WebResponse{Success: true, Message: "Product updated successfully"})
+}
+
+func (h *ProductHandler) UploadImages(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Invalid ID"})
+		return
+	}
+
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Failed to parse form"})
+		return
+	}
+
+	files := form.File["images"]
+	if len(files) == 0 {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "No images uploaded"})
+		return
+	}
+
+	os.MkdirAll("uploads/products", os.ModePerm)
+
+	var savedPaths []string
+	for _, file := range files {
+		ext := strings.ToLower(filepath.Ext(file.Filename))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+			ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Only JPG and PNG allowed"})
+			return
+		}
+		newFileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+		filePath := filepath.Join("uploads/products", newFileName)
+		if err := ctx.SaveUploadedFile(file, filePath); err != nil {
+			ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: "Failed to save image"})
+			return
+		}
+		savedPaths = append(savedPaths, "/"+filePath)
+	}
+
+	if err := h.service.UpdateImages(ctx.Request.Context(), id, savedPaths); err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.WebResponse{Success: true, Message: "Images uploaded successfully", Data: savedPaths})
 }
 
 func (h *ProductHandler) Delete(ctx *gin.Context) {
