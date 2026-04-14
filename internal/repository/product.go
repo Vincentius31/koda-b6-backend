@@ -165,15 +165,18 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 		return err
 	}
 
-	tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id)
 	tx.Exec(ctx, `DELETE FROM product_size WHERE product_id=$1`, id)
 	tx.Exec(ctx, `DELETE FROM product_variant WHERE product_id=$1`, id)
 	tx.Exec(ctx, `DELETE FROM discount WHERE product_id=$1`, id)
 	tx.Exec(ctx, `DELETE FROM products_category WHERE product_id=$1`, id)
 
-	for _, img := range req.ImageProduct {
-		tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img)
+	if len(req.ImageProduct) > 0 {
+		tx.Exec(ctx, `DELETE FROM product_images WHERE product_id=$1`, id)
+		for _, img := range req.ImageProduct {
+			tx.Exec(ctx, `INSERT INTO product_images (product_id, path) VALUES ($1, $2)`, id, img)
+		}
 	}
+
 	for _, s := range req.Size {
 		addPrice := 0
 		if s == "Large" || s == "500 gr" {
