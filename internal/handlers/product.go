@@ -145,6 +145,11 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 		return
 	}
 
+	if err := ctx.Request.ParseMultipartForm(32 << 20); err != nil {
+		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Failed to parse form data"})
+		return
+	}
+
 	payload, err := h.parseProductForm(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, models.WebResponse{Success: false, Message: "Invalid form data"})
@@ -156,7 +161,6 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: "Failed to upload new images"})
 		return
 	}
-	
 	if len(imagePaths) > 0 {
 		payload.ImageProduct = imagePaths
 	}
@@ -165,6 +169,7 @@ func (h *ProductHandler) Update(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, models.WebResponse{Success: true, Message: "Product updated successfully"})
 }
 
