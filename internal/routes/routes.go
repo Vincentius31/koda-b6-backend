@@ -114,9 +114,10 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 			categoryRoutes.PATCH("/:id", categoryHandler.Update)
 			categoryRoutes.DELETE("/:id", categoryHandler.Delete)
 		}
-	
+
 		productRoutes := adminRoutes.Group("/product")
 		{
+			productRoutes.GET("/promos", productHandler.GetPromos)
 			productRoutes.GET("", productHandler.GetAll)
 			productRoutes.GET("/:id", productHandler.GetByID)
 			productRoutes.POST("", productHandler.Create)
