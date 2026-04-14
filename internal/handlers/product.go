@@ -22,8 +22,19 @@ func NewProductHandler(s *service.ProductService) *ProductHandler {
 	return &ProductHandler{service: s}
 }
 
+func (h *ProductHandler) GetPromos(ctx *gin.Context) {
+	promos, err := h.service.GetPromos(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.WebResponse{Success: false, Message: "Failed to retrieve promos"})
+		return
+	}
+	ctx.JSON(http.StatusOK, models.WebResponse{Success: true, Message: "Promos retrieved", Data: promos})
+}
+
 func (h *ProductHandler) parseProductForm(ctx *gin.Context) (models.AdminProductPayload, error) {
 	var payload models.AdminProductPayload
+
+	ctx.MultipartForm()
 
 	payload.NameProduct = ctx.PostForm("nameProduct")
 	payload.Description = ctx.PostForm("description")
