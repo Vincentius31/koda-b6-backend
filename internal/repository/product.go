@@ -2,21 +2,27 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"koda-b6-backend/internal/models"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
+const catalogCacheTTL = 5 * time.Minute
+
 type ProductRepository struct {
-	db *pgxpool.Pool
+	db    *pgxpool.Pool
+	redis *redis.Client
 }
 
-func NewProductRepository(db *pgxpool.Pool) *ProductRepository {
-	return &ProductRepository{db: db}
+func NewProductRepository(db *pgxpool.Pool, rdb *redis.Client) *ProductRepository {
+	return &ProductRepository{db: db, redis: rdb}
 }
 
 func (r *ProductRepository) GetAvailablePromos(ctx context.Context) ([]string, error) {
@@ -89,16 +95,19 @@ func (r *ProductRepository) Create(ctx context.Context, req models.AdminProductP
 
 	if req.PromoType != "" {
 		var rate float64
-
 		errRate := tx.QueryRow(ctx, `SELECT discount_rate FROM discount WHERE description = $1 LIMIT 1`, req.PromoType).Scan(&rate)
-
 		if errRate == nil {
 			isFlashSale := (req.PromoType == "Flash Sale" || req.PromoType == "FLASH SALE!")
 			tx.Exec(ctx, `INSERT INTO discount (product_id, discount_rate, description, is_flash_sale) VALUES ($1, $2, $3, $4)`, productID, rate, req.PromoType, isFlashSale)
 		}
 	}
 
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	r.invalidateCatalogCache(ctx)
+	return nil
 }
 
 func (r *ProductRepository) FindAll(ctx context.Context) ([]models.AdminProductPayload, error) {
@@ -229,7 +238,12 @@ func (r *ProductRepository) Update(ctx context.Context, id int, req models.Admin
 		}
 	}
 
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	r.invalidateCatalogCache(ctx)
+	return nil
 }
 
 func (r *ProductRepository) UpdateImages(ctx context.Context, id int, paths []string) error {
@@ -254,7 +268,12 @@ func (r *ProductRepository) UpdateImages(ctx context.Context, id int, paths []st
 func (r *ProductRepository) Delete(ctx context.Context, id int) error {
 	query := `DELETE FROM products WHERE id_product = $1`
 	_, err := r.db.Exec(ctx, query, id)
-	return err
+	if err != nil {
+		return err
+	}
+
+	r.invalidateCatalogCache(ctx)
+	return nil
 }
 
 func (r *ProductRepository) GetRecommended(ctx context.Context) ([]models.ProductLanding, error) {
@@ -319,7 +338,45 @@ func (r *ProductRepository) buildCatalogFilters(params map[string]string) (strin
 	return whereSQL, args
 }
 
+func buildCatalogCacheKey(params map[string]string) string {
+	return fmt.Sprintf("catalog:page=%s:search=%s:category=%s:min=%s:max=%s",
+		params["page"],
+		params["search"],
+		params["category"],
+		params["min_price"],
+		params["max_price"],
+	)
+}
+
+
+func (r *ProductRepository) invalidateCatalogCache(ctx context.Context) {
+	var cursor uint64
+	for {
+		keys, nextCursor, err := r.redis.Scan(ctx, cursor, "catalog:*", 100).Result()
+		if err != nil {
+			break
+		}
+		if len(keys) > 0 {
+			r.redis.Del(ctx, keys...)
+		}
+		cursor = nextCursor
+		if cursor == 0 {
+			break
+		}
+	}
+}
+
 func (r *ProductRepository) GetCatalog(ctx context.Context, params map[string]string) (*models.ProductCatalogResponse, error) {
+	cacheKey := buildCatalogCacheKey(params)
+
+	cached, err := r.redis.Get(ctx, cacheKey).Bytes()
+	if err == nil {
+		var result models.ProductCatalogResponse
+		if jsonErr := json.Unmarshal(cached, &result); jsonErr == nil {
+			return &result, nil
+		}
+	}
+
 	page, _ := strconv.Atoi(params["page"])
 	if page < 1 {
 		page = 1
@@ -329,7 +386,6 @@ func (r *ProductRepository) GetCatalog(ctx context.Context, params map[string]st
 
 	whereSQL, args := r.buildCatalogFilters(params)
 
-	// 1. Pagination
 	var total int
 	countQuery := `
 		SELECT COUNT(DISTINCT p.id_product) 
@@ -339,7 +395,6 @@ func (r *ProductRepository) GetCatalog(ctx context.Context, params map[string]st
 		WHERE p.is_active = TRUE ` + whereSQL
 	_ = r.db.QueryRow(ctx, countQuery, args...).Scan(&total)
 
-	// 2. Tampilkan data sesuai pagination
 	fetchQuery := `
 		SELECT 
 			p.id_product, p.name, p.desc, p.price,
@@ -365,15 +420,24 @@ func (r *ProductRepository) GetCatalog(ctx context.Context, params map[string]st
 	defer rows.Close()
 
 	items, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.ProductCatalog])
+	if err != nil {
+		return nil, err
+	}
 
-	return &models.ProductCatalogResponse{
+	result := &models.ProductCatalogResponse{
 		Items: items,
 		Meta: models.PagingMeta{
 			TotalItems:  total,
 			TotalPages:  (total + limit - 1) / limit,
 			CurrentPage: page,
 		},
-	}, err
+	}
+
+	if data, jsonErr := json.Marshal(result); jsonErr == nil {
+		r.redis.Set(ctx, cacheKey, data, catalogCacheTTL)
+	}
+
+	return result, nil
 }
 
 func (r *ProductRepository) GetFullDetailByID(ctx context.Context, id int) (*models.ProductDetail, error) {
