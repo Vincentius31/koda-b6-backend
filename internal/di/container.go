@@ -1,14 +1,19 @@
 package di
 
 import (
-	"github.com/jackc/pgx/v5/pgxpool"
+	"fmt"
 	"koda-b6-backend/internal/handlers"
 	"koda-b6-backend/internal/repository"
 	"koda-b6-backend/internal/service"
+	"os"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 type Container struct {
 	pool *pgxpool.Pool
+	redis *redis.Client
 
 	//Users
 	userRepo    *repository.UserRepository
@@ -98,6 +103,20 @@ type Container struct {
 	dashboardHandler *handlers.DashboardHandler
 }
 
+func NewRedisClient() *redis.Client {
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		redisURL = "redis://localhost:6379"
+	}
+ 
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		panic(fmt.Sprintf("invalid REDIS_URL: %v", err))
+	}
+ 
+	return redis.NewClient(opt)
+}
+
 func NewContainer(pool *pgxpool.Pool) *Container {
 	container := &Container{
 		pool: pool,
@@ -127,7 +146,7 @@ func (c *Container) initDependencies() {
 	c.categoryHandler = handlers.NewCategoryHandler(c.categoryService)
 
 	//Product
-	c.productRepo = repository.NewProductRepository(c.pool)
+	c.productRepo = repository.NewProductRepository(c.pool, c.redis)
 	c.productService = service.NewProductService(c.productRepo)
 	c.productHandler = handlers.NewProductHandler(c.productService)
 
